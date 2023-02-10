@@ -1,9 +1,11 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.Checkbox
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,8 +32,7 @@ private fun Modifier.cursorForHorizontalResize(): Modifier =
 @Composable
 @Preview
 fun DistEntry(distName: String){
-
-    val (checkedState, onStateChange) = remember { mutableStateOf(true) }
+    val (checkedState, onStateChange) = remember { mutableStateOf(false) }
     Row(
         Modifier
             .fillMaxWidth()
@@ -46,7 +47,7 @@ fun DistEntry(distName: String){
     ) {
         Checkbox(
             checked = checkedState,
-            onCheckedChange = null // null recommended for accessibility with screenreaders
+            onCheckedChange = null // null recommended for accessibility with screen readers
         )
         Text(
             text = distName,
@@ -58,7 +59,7 @@ fun DistEntry(distName: String){
 @Composable
 @Preview
 fun DistSelection() {
-    Column(Modifier.fillMaxSize(), Arrangement.spacedBy(5.dp)) {
+    Column(Modifier.fillMaxSize().padding(10.dp), Arrangement.spacedBy(5.dp)) {
         Text(
             text = "Discrete",
             textAlign = TextAlign.Center,
@@ -70,12 +71,46 @@ fun DistSelection() {
         DistEntry("Gamma")
         Text(
             text = "Continuous",
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.h5
         )
-        DistEntry("Normal")
-        DistEntry("Weibull")
-        DistEntry("Exponential")
-        DistEntry("Gamma")
+        DistEntry("Binomial")
+        DistEntry("Bernoulli")
+        DistEntry("Poisson")
+        DistEntry("Negative Binomial")
+        OutlinedButton(onClick = {/* Functionality Here */ }) {
+            Text(
+                text = "Run",
+                textAlign = TextAlign.Center,
+                color = Color.Black
+            )
+        }
+    }
+}
+
+@Composable
+@Preview
+fun DistRanking() {
+    Column(Modifier.fillMaxSize().padding(10.dp), Arrangement.spacedBy(5.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+            TestWeight("Chi-Squared Test")
+            TestWeight("Kolmogorov-Smirnov Test")
+        }
+    }
+}
+
+@Composable
+@Preview
+fun TestWeight(testName: String) {
+    Row {
+        Text(
+            text = testName,
+            Modifier.border(width = 1.dp, color = Color.Black).padding(5.dp)
+        )
+        Text(
+            text = "RESULT HERE",
+            Modifier.border(width = 1.dp, color = Color.Black).padding(5.dp)
+        )
     }
 }
 
@@ -91,6 +126,7 @@ fun App() {
             first(205.dp) {
                 Row(Modifier.fillMaxSize(), Arrangement.spacedBy(5.dp)) {
                     DistSelection()
+                    DistRanking()
                 }
             }
             second(100.dp) {
@@ -121,7 +157,11 @@ fun App() {
 }
 
 fun main() = application {
-    Window(onCloseRequest = ::exitApplication) {
+    val windowTitle = "FitDistApp"
+    Window(
+        title = windowTitle,
+        onCloseRequest = ::exitApplication
+    ) {
         App()
     }
 }
