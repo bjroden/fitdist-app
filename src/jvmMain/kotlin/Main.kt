@@ -28,36 +28,40 @@ private fun Modifier.cursorForHorizontalResize(): Modifier =
 fun App() {
     MaterialTheme {
         val splitterState = rememberSplitPaneState()
-        HorizontalSplitPane(
-            splitPaneState = splitterState
-        ) {
-            first(205.dp) {
-                Row(Modifier.fillMaxSize(), Arrangement.spacedBy(5.dp)) {
-                    DistSelection()
+
+        Row(Modifier.fillMaxSize(), Arrangement.spacedBy(5.dp)) {
+            Box {
+                DistSelection()
+            }
+
+            HorizontalSplitPane(
+                splitPaneState = splitterState
+            ) {
+                first(205.dp) {
                     DistRanking()
                 }
-            }
-            second(100.dp) {
-                Box(Modifier.background(Color.Red).fillMaxSize())
-            }
-            splitter {
-                visiblePart {
-                    Box(
-                        Modifier
-                            .width(1.dp)
-                            .fillMaxHeight()
-                            .background(MaterialTheme.colors.background)
-                    )
+                second(100.dp) {
+                    Box(Modifier.background(Color.Red).fillMaxSize())
                 }
-                handle {
-                    Box(
-                        Modifier
-                            .markAsHandle()
-                            .cursorForHorizontalResize()
-                            .background(SolidColor(Color.Gray), alpha = 0.50f)
-                            .width(9.dp)
-                            .fillMaxHeight()
-                    )
+                splitter {
+                    visiblePart {
+                        Box(
+                            Modifier
+                                .width(1.dp)
+                                .fillMaxHeight()
+                                .background(MaterialTheme.colors.background)
+                        )
+                    }
+                    handle {
+                        Box(
+                            Modifier
+                                .markAsHandle()
+                                .cursorForHorizontalResize()
+                                .background(SolidColor(Color.Gray), alpha = 0.50f)
+                                .width(9.dp)
+                                .fillMaxHeight()
+                        )
+                    }
                 }
             }
         }
