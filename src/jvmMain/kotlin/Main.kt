@@ -41,7 +41,7 @@ fun App() {
                     DistRanking()
                 }
                 second(100.dp) {
-                    Box(Modifier.background(Color.Red).fillMaxSize())
+                    FitVisualization()
                 }
                 splitter {
                     visiblePart {
