@@ -78,8 +78,8 @@ fun TestWeight(testName: String) {
             TextField(
                 value = text,
                 onValueChange = { text = it },
-                label = { Text("Email") },
-                placeholder = { Text("example@gmail.com") }
+                label = { Text("Weight") },
+                placeholder = { Text("0") }
             )
         }
     }
