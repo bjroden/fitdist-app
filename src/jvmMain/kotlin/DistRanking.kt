@@ -1,5 +1,8 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.Checkbox
 import androidx.compose.material.Divider
@@ -17,17 +20,22 @@ import androidx.compose.ui.unit.dp
 @Preview
 fun DistRanking() {
     Column(Modifier
-        .height(80.dp)
+        .height(400.dp)
         .padding(10.dp),
         Arrangement.spacedBy(5.dp)
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-            TestWeight("Chi-Squared Test")
-            TestWeight("Kolmogorov-Smirnov Test")
+        LazyVerticalGrid(columns = GridCells.Adaptive(500.dp)) {
+            item (span = { GridItemSpan(1) }){
+                TestWeight("Chi-Squared Test")
+            }
+            item (span = { GridItemSpan(1) }){
+                TestWeight("Kolmogorov-Smirnov Test")
+            }
         }
     }
 }
 
+// TODO: add lazy vertical grid to test weight to let textbox stack below checkbox on squeeze
 @Composable
 @Preview
 fun TestWeight(testName: String) {
