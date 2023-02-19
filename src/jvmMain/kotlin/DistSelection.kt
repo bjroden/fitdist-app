@@ -1,3 +1,4 @@
+
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.*
@@ -5,10 +6,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Checkbox
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedButton
-import androidx.compose.material.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,7 +43,7 @@ fun DistEntry(distName: String){
         )
         Text(
             text = distName,
-            style = MaterialTheme.typography.body1,
+            style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(start = 16.dp)
         )
     }
@@ -71,7 +72,7 @@ fun DistSelection() {
                 Text(
                     text = "Discrete",
                     textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.h5
+                    style = MaterialTheme.typography.headlineMedium
                 )
 
                 DistEntry("Normal")
@@ -82,7 +83,7 @@ fun DistSelection() {
                 Text(
                     text = "Continuous",
                     textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.h5
+                    style = MaterialTheme.typography.headlineMedium
                 )
 
                 DistEntry("Binomial")
@@ -90,11 +91,11 @@ fun DistSelection() {
                 DistEntry("Poisson")
                 DistEntry("Negative Binomial")
 
-                OutlinedButton(onClick = {/* Functionality Here */ }) {
+                Button(onClick = {/* Functionality Here */ }) {
                     Text(
                         text = "Run",
                         textAlign = TextAlign.Center,
-                        color = Color.Black
+                        color = Color.White
                     )
                 }
             }

@@ -4,10 +4,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material.Checkbox
-import androidx.compose.material.Divider
-import androidx.compose.material.Text
-import androidx.compose.material.TextField
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -16,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 
+// TODO: Figure out weird behavior with K-S Test on expansion
 @Composable
 @Preview
 fun DistRanking() {
@@ -24,18 +22,23 @@ fun DistRanking() {
         .padding(10.dp),
         Arrangement.spacedBy(5.dp)
     ) {
-        LazyVerticalGrid(columns = GridCells.Adaptive(500.dp)) {
-            item (span = { GridItemSpan(1) }){
-                TestWeight("Chi-Squared Test")
-            }
-            item (span = { GridItemSpan(1) }){
-                TestWeight("Kolmogorov-Smirnov Test")
-            }
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(400.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalArrangement = Arrangement.Top
+            ) {
+                item (span = { GridItemSpan(1) }){
+                    TestWeight("Chi-Squared Test")
+                }
+                item (span = { GridItemSpan(1) }){
+                    TestWeight("K-S Test")
+                }
         }
     }
 }
 
 // TODO: add lazy vertical grid to test weight to let textbox stack below checkbox on squeeze
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
 fun TestWeight(testName: String) {
