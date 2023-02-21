@@ -2,7 +2,7 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     kotlin("multiplatform")
-    id("org.jetbrains.compose")
+    id("org.jetbrains.compose") version "1.3.0"
 }
 
 group = "com.example"
@@ -23,7 +23,8 @@ kotlin {
         val jvmMain by getting {
             dependencies {
                 implementation(compose.desktop.currentOs)
-                implementation("org.jetbrains.compose.components:components-splitpane-desktop:1.0.1")
+                implementation("org.jetbrains.compose.material3:material3-desktop:1.3.0")
+                implementation("org.jetbrains.compose.components:components-splitpane-desktop:1.3.0")
 
             }
         }
