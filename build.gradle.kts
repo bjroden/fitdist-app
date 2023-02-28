@@ -27,7 +27,7 @@ kotlin {
                 implementation("org.jetbrains.compose.components:components-splitpane-desktop:1.3.0")
                 implementation("org.jetbrains.lets-plot:lets-plot-batik:3.0.0")
                 implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.2.0")
-                implementation("org.example:fitdist-kotlin:v0.1")
+                implementation("org.example:fitdist-kotlin:v0.1.1")
             }
         }
         val jvmTest by getting
