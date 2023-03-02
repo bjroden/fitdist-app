@@ -26,6 +26,10 @@ fun FitVisualization() {
                     )
                 }
             }
+            if (state == 1)
+            {
+                QQPlot()
+            }
             Text(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 text = "Text tab ${state + 1} selected",
