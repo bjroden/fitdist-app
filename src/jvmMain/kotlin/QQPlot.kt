@@ -11,8 +11,10 @@ import jetbrains.datalore.vis.swing.batik.DefaultPlotPanelBatik
 import org.jetbrains.kotlinx.dataframe.DataFrame
 import org.jetbrains.kotlinx.dataframe.api.toMap
 import org.jetbrains.kotlinx.dataframe.io.readCSV
-import org.jetbrains.letsPlot.geom.geomDensity
+import org.jetbrains.letsPlot.geom.geomQQ
+import org.jetbrains.letsPlot.geom.geomQQLine
 import org.jetbrains.letsPlot.intern.toSpec
+import org.jetbrains.letsPlot.label.ggtitle
 import org.jetbrains.letsPlot.letsPlot
 import javax.swing.BoxLayout
 import javax.swing.JPanel
@@ -36,14 +38,12 @@ fun QQPlot() {
 fun plot(): JPanel{
     val mpg = DataFrame.readCSV("https://raw.githubusercontent.com/JetBrains/lets-plot-kotlin/master/docs/examples/data/mpg.csv")
     val map = mpg.toMap()
-    val p = letsPlot(map) + geomDensity(
-        color = "dark-green",
-        fill = "green",
-        alpha = .3,
-        size = 2.0
-    ) {x = "hwy"}
+    val plot = letsPlot(map) {sample = "hwy"} + geomQQ(size = 5, color = "#3d3d3d", alpha = .3) +
+            geomQQLine(size = 1) +
+            ggtitle("Distribution of highway miles per gallon",
+                "Comparison of sample quantiles with normal distribution quantiles")
 
-    val rawSpec = p.toSpec()
+    val rawSpec = plot.toSpec()
     val processedSpec = MonolithicCommon.processRawSpecs(rawSpec, frontendOnly = false)
 
     return DefaultPlotPanelBatik(
