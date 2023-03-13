@@ -14,7 +14,7 @@ import androidx.compose.ui.text.style.TextOverflow
 @Preview
 fun FitVisualization() {
     var state by remember { mutableStateOf(0) }
-    val titles = listOf("Tab 1", "Tab 2", "Tab 3 with lots of text")
+    val titles = listOf("P-P Plot", "Q-Q Plot", "Histogram")
     Box {
         Column {
             TabRow(selectedTabIndex = state) {
@@ -29,6 +29,10 @@ fun FitVisualization() {
             if (state == 1)
             {
                 QQPlot()
+            }
+            if (state == 2)
+            {
+                Histogram()
             }
             Text(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
