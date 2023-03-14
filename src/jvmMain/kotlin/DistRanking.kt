@@ -120,8 +120,7 @@ fun RankList() {
     evals.add(DistEval("Negative Binomial", "Bad", 0.19f, 0.21f, 0.2f))
 
     LazyColumn (
-        Modifier
-            .padding(5.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         items(evals) { eval ->
             EvalDisplay(eval)
@@ -135,7 +134,7 @@ fun EvalDisplay(eval: DistEval) {
     Card {
         Row(
             Modifier
-                .padding(5.dp),
+                .padding(10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(25.dp)
         ) {
