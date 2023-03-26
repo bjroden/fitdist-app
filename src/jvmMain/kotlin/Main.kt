@@ -25,13 +25,23 @@ private fun Modifier.cursorForHorizontalResize(): Modifier =
 @OptIn(ExperimentalSplitPaneApi::class)
 @Composable
 @Preview
-fun App() {
+fun App(viewModel: ViewModel) {
     MaterialTheme {
         val splitterState = rememberSplitPaneState()
 
+        val continuousDists by viewModel.continuousDistSelection.collectAsState()
+        val discreteDists by viewModel.discreteSelection.collectAsState()
+
         Row(Modifier.fillMaxSize(), Arrangement.spacedBy(5.dp)) {
             Box {
-                DistSelection()
+                DistSelection(
+                    continuousSelection = continuousDists,
+                    discreteSelection = discreteDists,
+                    onSelect = { dist, newSelectedValue ->
+                        viewModel.distributionSelected(dist, newSelectedValue)
+                    },
+                    onRun = { /* Functionality here */  }
+                )
             }
 
             HorizontalSplitPane(
@@ -74,6 +84,6 @@ fun main() = application {
         title = windowTitle,
         onCloseRequest = ::exitApplication
     ) {
-        App()
+        App(viewModel = ViewModel(rememberCoroutineScope()))
     }
 }

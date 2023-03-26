@@ -10,39 +10,41 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import estimations.DistributionType
 
 
 @Composable
 @Preview
-fun DistEntry(distName: String){
-    val (checkedState, onStateChange) = remember { mutableStateOf(false) }
+fun DistEntry(
+    distType: DistributionType,
+    selected: Boolean,
+    onSelect: (DistributionType, Boolean) -> Unit = { _, _ -> }
+) {
     Row(
         Modifier
             .width(170.dp)
             .height(56.dp)
             .toggleable(
-                value = checkedState,
-                onValueChange = { onStateChange(!checkedState) },
+                value = selected,
+                onValueChange = { onSelect(distType, !selected) },
                 role = Role.Checkbox
             )
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Checkbox(
-            checked = checkedState,
+            checked = selected,
             onCheckedChange = null // null recommended for accessibility with screen readers
         )
         Text(
-            text = distName,
+            text = distType.distName,
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(start = 16.dp)
         )
@@ -50,7 +52,12 @@ fun DistEntry(distName: String){
 }
 @Composable
 @Preview
-fun DistSelection() {
+fun DistSelection(
+    continuousSelection: Map<DistributionType, Boolean> = emptyMap(),
+    discreteSelection: Map<DistributionType, Boolean> = emptyMap(),
+    onSelect: (DistributionType, Boolean) -> Unit = { _, _ -> },
+    onRun: () -> Unit = {}
+) {
     Box(
         modifier = Modifier.fillMaxHeight()
             .width(200.dp)
@@ -75,10 +82,9 @@ fun DistSelection() {
                     style = MaterialTheme.typography.headlineMedium
                 )
 
-                DistEntry("Normal")
-                DistEntry("Weibull")
-                DistEntry("Exponential")
-                DistEntry("Gamma")
+                discreteSelection.forEach { (dist, value) ->
+                    DistEntry(dist, value, onSelect = onSelect)
+                }
 
                 Text(
                     text = "Continuous",
@@ -86,12 +92,11 @@ fun DistSelection() {
                     style = MaterialTheme.typography.headlineMedium
                 )
 
-                DistEntry("Binomial")
-                DistEntry("Bernoulli")
-                DistEntry("Poisson")
-                DistEntry("Negative Binomial")
+                continuousSelection.forEach { (dist, value) ->
+                    DistEntry(dist, value, onSelect = onSelect)
+                }
 
-                Button(onClick = {/* Functionality Here */ }) {
+                Button(onClick = onRun) {
                     Text(
                         text = "Run",
                         textAlign = TextAlign.Center,
