@@ -1,5 +1,7 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -23,7 +25,7 @@ import javax.swing.JPanel
 fun Histogram() {
     SwingPanel(
         background = Color.White,
-        modifier = Modifier.fillMaxSize(1f),
+        modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(.80f),
         factory = {
             JPanel().apply {
                 layout = BoxLayout(this, BoxLayout.Y_AXIS)
