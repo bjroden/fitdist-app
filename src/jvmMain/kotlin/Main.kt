@@ -29,8 +29,8 @@ fun App(viewModel: ViewModel) {
     MaterialTheme {
         val splitterState = rememberSplitPaneState()
 
-        val continuousDists by viewModel.continuousDistSelection.collectAsState()
-        val discreteDists by viewModel.discreteSelection.collectAsState()
+        val continuousDists = viewModel.continuousDistSelection
+        val discreteDists = viewModel.discreteSelection
 
         Row(Modifier.fillMaxSize(), Arrangement.spacedBy(5.dp)) {
             Box {

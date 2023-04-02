@@ -9,34 +9,26 @@ import kotlin.reflect.full.isSubclassOf
 
 
 class ViewModel(private val coroutineScope: CoroutineScope) {
-    private val internalDistSelection = MutableStateFlow(
-        mutableStateMapOf(
-            *DistributionType.values()
-                .map { it to false }
-                .toTypedArray()
-        )
+    private val internalDistSelection = mutableStateMapOf(
+        *DistributionType.values()
+            .map { it to false }
+            .toTypedArray()
     )
 
     val distSelection
-        get() = internalDistSelection.mapState { it.toMap() }
+        get() = internalDistSelection.toMap()
 
     val continuousDistSelection
-        get() = internalDistSelection.mapState { dists ->
-            dists.filterKeys { it.isContinuous }
-        }
+        get() = internalDistSelection.filterKeys { it.isContinuous }
 
     val discreteSelection
-        get() = internalDistSelection.mapState { dists ->
-            dists.filterKeys { it.isDiscrete }
-        }
+        get() = internalDistSelection.filterKeys { it.isDiscrete }
 
     val selectedDists
-        get() = internalDistSelection.mapState { dists ->
-            dists.filterValues { it }.keys
-        }
+        get() = internalDistSelection.filterValues { it }
 
     fun distributionSelected(distType: DistributionType, newSelectedValue: Boolean) {
-        internalDistSelection.value.replace(distType, newSelectedValue)
+        internalDistSelection.replace(distType, newSelectedValue)
     }
 
     // Converts to StateFlow instead of Flow, since StateFlow refreshes compose UI properly
