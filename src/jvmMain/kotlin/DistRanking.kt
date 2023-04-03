@@ -16,11 +16,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import goodnessoffit.AbstractGofTest
+import goodnessoffit.ChiSquareGofTest
+import goodnessoffit.KolmogorovSmirnovGofTest
 
 // TODO: Figure out weird behavior with K-S Test on expansion
 @Composable
 @Preview
-fun DistRanking() {
+fun DistRanking(results: List<DistResult>) {
     Column(Modifier
         .padding(10.dp),
         Arrangement.spacedBy(5.dp)
@@ -37,7 +40,7 @@ fun DistRanking() {
                 TestWeight("K-S Test")
             }
         }
-        RankList()
+        RankList(results)
     }
 }
 
@@ -107,22 +110,11 @@ fun TestWeight(testName: String) {
 
 @Composable
 @Preview
-fun RankList() {
-    val evals = mutableStateListOf<DistEval>()
-    // Example Evals
-    evals.add(DistEval("Normal", "Good", 0.87436f, 0.7322f, 0.8f))
-    evals.add(DistEval("Weibull", "Bad", 0.19f, 0.21f, 0.2f))
-    evals.add(DistEval("Exponential", "Invalid"))
-    evals.add(DistEval("Gamma", "Good", 0.87436f, 0.7322f, 0.8f))
-    evals.add(DistEval("Binomial", "Bad", 0.19f, 0.21f, 0.2f))
-    evals.add(DistEval("Bernoulli", "Invalid"))
-    evals.add(DistEval("Poisson", "Good", 0.87436f, 0.7322f, 0.8f))
-    evals.add(DistEval("Negative Binomial", "Bad", 0.19f, 0.21f, 0.2f))
-
+fun RankList(results: List<DistResult>) {
     LazyColumn (
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        items(evals) { eval ->
+        items(results) { eval ->
             EvalDisplay(eval)
         }
     }
@@ -130,7 +122,7 @@ fun RankList() {
 
 @Composable
 @Preview
-fun EvalDisplay(eval: DistEval) {
+fun EvalDisplay(result: DistResult) {
     Card {
         Row(
             Modifier
@@ -139,52 +131,57 @@ fun EvalDisplay(eval: DistEval) {
             horizontalArrangement = Arrangement.spacedBy(25.dp)
         ) {
             Text(
-                eval.distName,
+                result.distType.distName,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.width(100.dp)
             )
             Text(
-                eval.distGoodness,
+                result.distGoodness,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.width(50.dp)
             )
-            if (eval.distGoodness != "Invalid") {
+            result.dist.onSuccess {
                 Column(
                     Modifier
                         .width(175.dp)
                 ) {
-                    Row {
-                        Text(
-                            "Chi-Squared: " + eval.chiSquaredScore.toString(),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                    result.tests.forEach { testResult ->
+                        testResult.onSuccess { test ->
+                            Row {
+                                Text(
+                                    "${getTestName(test)}: ${formatDecimal(test.testScore)}",
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }.onFailure { error ->
+                            Row {
+                                Text(
+                                    "Test Failed: ${error.message}",
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
                     }
                     Row {
                         Text(
-                            "KS: " + eval.ksScore.toString(),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    Row {
-                        Text(
-                            "Score: " + eval.totalScore.toString(),
+                            "Score: ${formatDecimal(result.score)}",
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
-            } else {
+            }.onFailure {
                 Column(
                     Modifier
                         .width(175.dp)
                 ) {
                     Text("")
                     Text(
-                        "Distribution is Invalid",
+                        "Distribution is Invalid: ${it.message}",
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -194,3 +191,11 @@ fun EvalDisplay(eval: DistEval) {
         }
     }
 }
+
+fun getTestName(test: AbstractGofTest) = when (test) {
+    is ChiSquareGofTest -> "Chi-square"
+    is KolmogorovSmirnovGofTest -> "K-S"
+    else -> "Unknown"
+}
+
+fun formatDecimal(x: Double) = "%,.8f".format(x)

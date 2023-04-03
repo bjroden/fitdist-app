@@ -31,6 +31,7 @@ fun App(viewModel: ViewModel) {
 
         val continuousDists = viewModel.continuousDistSelection
         val discreteDists = viewModel.discreteSelection
+        val testResults = viewModel.testResults
 
         Row(Modifier.fillMaxSize(), Arrangement.spacedBy(5.dp)) {
             Box {
@@ -40,7 +41,7 @@ fun App(viewModel: ViewModel) {
                     onSelect = { dist, newSelectedValue ->
                         viewModel.distributionSelected(dist, newSelectedValue)
                     },
-                    onRun = { /* Functionality here */  }
+                    onRun = { viewModel.runResults() }
                 )
             }
 
@@ -48,7 +49,7 @@ fun App(viewModel: ViewModel) {
                 splitPaneState = splitterState
             ) {
                 first(205.dp) {
-                    DistRanking()
+                    DistRanking(testResults)
                 }
                 second(100.dp) {
                     FitVisualization()
