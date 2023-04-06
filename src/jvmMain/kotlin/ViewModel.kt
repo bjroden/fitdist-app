@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.*
 import ksl.utilities.distributions.ContinuousDistributionIfc
 import ksl.utilities.distributions.DiscreteDistributionIfc
 import ksl.utilities.distributions.DistributionIfc
-import ksl.utilities.random.rvariable.NormalRV
 import kotlin.reflect.full.isSubclassOf
 
 class DistResult(
@@ -22,9 +21,10 @@ class DistResult(
     val score: Double = 0.0 // TODO: Remove hardcoded value
 )
 
-class ViewModel(private val coroutineScope: CoroutineScope) {
-
-    private var data = NormalRV().sample(500) // TODO: Add data flow
+class ViewModel(
+    val data: DoubleArray,
+    private val coroutineScope: CoroutineScope
+) {
 
     private val internalDistSelection = mutableStateMapOf(
         *DistributionType.values()

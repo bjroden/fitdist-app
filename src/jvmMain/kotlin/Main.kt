@@ -10,12 +10,16 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import ksl.utilities.io.KSLFileUtil
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import org.jetbrains.compose.splitpane.HorizontalSplitPane
 import org.jetbrains.compose.splitpane.rememberSplitPaneState
 import java.awt.Cursor
+import java.awt.FileDialog
+import java.io.File
 
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -85,6 +89,23 @@ fun main() = application {
         title = windowTitle,
         onCloseRequest = ::exitApplication
     ) {
-        App(viewModel = ViewModel(rememberCoroutineScope()))
+        val coroutineScope = rememberCoroutineScope()
+        var viewModel by remember { mutableStateOf(ViewModel(doubleArrayOf(), coroutineScope)) }
+
+        MenuBar {
+            Menu("File", mnemonic = 'F') {
+                Item("Input Data", onClick = {
+                    val dialog = FileDialog(window, "Open Input Data", FileDialog.LOAD)
+                    dialog.isVisible = true
+                    val dir = dialog.directory ?: return@Item
+                    val file = dialog.file ?: return@Item
+                    val path = File(dir, file).toPath() ?: return@Item
+                    val data = KSLFileUtil.scanToArray(path)
+                    viewModel = ViewModel(data, coroutineScope)
+                })
+            }
+        }
+
+        App(viewModel)
     }
 }
