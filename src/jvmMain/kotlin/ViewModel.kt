@@ -8,6 +8,7 @@ import goodnessoffit.GofFactory
 import goodnessoffit.KSRequest
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.serialization.Serializable
 import ksl.utilities.distributions.ContinuousDistributionIfc
 import ksl.utilities.distributions.DiscreteDistributionIfc
 import ksl.utilities.distributions.DistributionIfc
@@ -21,10 +22,23 @@ class DistResult(
     val score: Double = 0.0 // TODO: Remove hardcoded value
 )
 
+@Serializable
+class ViewModelSavedSession(
+    val data: DoubleArray,
+    val selectedDists: Collection<DistributionType>
+)
+
 class ViewModel(
     val data: DoubleArray,
     private val coroutineScope: CoroutineScope
 ) {
+    constructor(
+        session: ViewModelSavedSession,
+        coroutineScope: CoroutineScope
+    ) : this(session.data, coroutineScope) {
+        session.selectedDists.forEach { internalDistSelection[it] = true }
+        runResults()
+    }
 
     private val internalDistSelection = mutableStateMapOf(
         *DistributionType.values()
@@ -87,6 +101,11 @@ class ViewModel(
             internalTestResults.addAll(results)
         }
     }
+
+    fun toSession() = ViewModelSavedSession(
+        data,
+        internalTestResults.map { it.distType } // Save last ran distributions, ignore selections made after
+    )
 
     // Converts to StateFlow instead of Flow, since StateFlow refreshes compose UI properly
     @OptIn(ExperimentalCoroutinesApi::class)
