@@ -2,9 +2,6 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.*
@@ -28,19 +25,36 @@ fun DistRanking(results: List<DistResult>) {
         .padding(10.dp),
         Arrangement.spacedBy(5.dp)
     ) {
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(400.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        LazyColumn (
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            item (span = { GridItemSpan(1) }){
-                TestWeight("Chi-Squared Test")
+            item (){
+                TestWeight("Chi-Squared Test") { binWidth() }
             }
-            item (span = { GridItemSpan(1) }){
+            item (){
                 TestWeight("K-S Test")
             }
+            items(results) { eval ->
+                EvalDisplay(eval)
+            }
         }
-        RankList(results)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+@Preview
+fun binWidth() {
+    Box{
+        var text by rememberSaveable { mutableStateOf("") }
+
+        TextField(
+            value = text,
+            onValueChange = { text = it },
+            label = { Text("Bin Width", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+            placeholder = { Text("0") },
+            singleLine = true
+        )
     }
 }
 
@@ -48,11 +62,9 @@ fun DistRanking(results: List<DistResult>) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
-fun TestWeight(testName: String) {
+fun TestWeight(testName: String, content: @Composable() () -> Unit = {}) {
     val (checkedState, onStateChange) = remember { mutableStateOf(false) }
-    Card (
-
-    ) {
+    Card {
         Row(
             Modifier
                 .padding(5.dp),
@@ -104,18 +116,7 @@ fun TestWeight(testName: String) {
                     singleLine = true
                 )
             }
-        }
-    }
-}
-
-@Composable
-@Preview
-fun RankList(results: List<DistResult>) {
-    LazyColumn (
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        items(results) { eval ->
-            EvalDisplay(eval)
+            content()
         }
     }
 }
