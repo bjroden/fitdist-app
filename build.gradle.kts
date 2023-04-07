@@ -3,6 +3,7 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 plugins {
     kotlin("multiplatform")
     id("org.jetbrains.compose") version "1.3.0"
+    kotlin("plugin.serialization") version "1.7.21"
 }
 
 group = "com.example"
@@ -29,6 +30,7 @@ kotlin {
                 implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.3.0")
                 implementation("org.jetbrains.kotlinx:dataframe:0.9.1")
                 implementation("org.example:fitdist-kotlin:v0.1.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
             }
         }
         val jvmTest by getting
