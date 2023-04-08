@@ -12,6 +12,7 @@ import kotlinx.serialization.Serializable
 import ksl.utilities.distributions.ContinuousDistributionIfc
 import ksl.utilities.distributions.DiscreteDistributionIfc
 import ksl.utilities.distributions.DistributionIfc
+import plotting.Plotting
 import kotlin.reflect.full.isSubclassOf
 
 class DistResult(
@@ -55,8 +56,11 @@ class ViewModel(
     val discreteSelection
         get() = internalDistSelection.filterKeys { it.isDiscrete }
 
-    val selectedDists
+    val currentSelection
         get() = internalDistSelection.filterValues { it }.keys
+
+    val resultsSelection
+        get() = internalTestResults.map { it.distType }
 
     fun distributionSelected(distType: DistributionType, newSelectedValue: Boolean) {
         internalDistSelection.replace(distType, newSelectedValue)
@@ -67,7 +71,7 @@ class ViewModel(
     val testResults
         get() = internalTestResults.toList()
 
-    fun runResults() = replaceResults(selectedDists)
+    fun runResults() = replaceResults(currentSelection)
 
     private fun replaceResults(dists: Set<DistributionType>) = coroutineScope.launch {
         withContext(Dispatchers.Default) {
@@ -99,12 +103,76 @@ class ViewModel(
 
             internalTestResults.clear()
             internalTestResults.addAll(results)
+            reconstructPlots()
         }
+    }
+
+    private fun reconstructPlots() = coroutineScope.launch {
+        runQQData()
+        runPPData()
+    }
+
+    private val internalQQData = mutableStateMapOf<String, Any?>()
+
+    val qqData
+        get() = internalQQData.toMap()
+
+    private fun runQQData() = coroutineScope.launch {
+        withContext(Dispatchers.Default) {
+            val letsPlotData = createLetsPlotData(
+                xTransformer = { data, dist -> Plotting.generateExpectedData(data.size, dist) },
+                yTransformer = { data, _ -> data }
+            )
+            internalQQData.clear()
+            internalQQData += letsPlotData
+        }
+    }
+
+    private val internalPPData = mutableStateMapOf<String, Any?>()
+
+    val ppData
+        get() = internalPPData.toMap()
+
+    private fun runPPData() = coroutineScope.launch {
+        withContext(Dispatchers.Default) {
+            val letsPlotData = createLetsPlotData(
+                xTransformer = { data, _ -> Plotting.generateExpectedProbabilities(data.size) },
+                yTransformer = { data, dist -> Plotting.observedDataToProbabilities(data, dist) }
+            )
+            internalPPData.clear()
+            internalPPData += letsPlotData
+        }
+    }
+
+    private fun createLetsPlotData(
+        xTransformer: (DoubleArray, DistributionIfc<*>) -> DoubleArray,
+        yTransformer: (DoubleArray, DistributionIfc<*>) -> DoubleArray
+    ): Map<String, Any?> {
+        val sortedData = data.sortedArray()
+        val dists = internalTestResults.mapNotNull { distResult ->
+            distResult.dist.getOrNull()?.let { dist ->
+                distResult.distType to dist
+            }
+        }
+        val cond = dists.flatMap { entry ->
+            List(sortedData.size) { entry.first.distName }
+        }
+        val xs = dists.flatMap { entry ->
+            xTransformer(sortedData, entry.second).toList()
+        }
+        val ys = dists.flatMap { entry ->
+            yTransformer(sortedData, entry.second).toList()
+        }
+        return mapOf(
+            "cond" to cond,
+            "Theoretical" to xs,
+            "Empirical" to ys
+        )
     }
 
     fun toSession() = ViewModelSavedSession(
         data,
-        internalTestResults.map { it.distType } // Save last ran distributions, ignore selections made after
+        resultsSelection // Save last ran distributions, ignore selections made after
     )
 
     // Converts to StateFlow instead of Flow, since StateFlow refreshes compose UI properly
