@@ -125,6 +125,7 @@ class ViewModel(
                 "Empirical" to { data, _ -> data }
             )
             internalQQData.clear()
+            if (letsPlotData == null) { return@withContext }
             internalQQData += letsPlotData
         }
     }
@@ -141,6 +142,7 @@ class ViewModel(
                 "Empirical" to { data, dist -> Plotting.observedDataToProbabilities(data, dist) }
             )
             internalPPData.clear()
+            if (letsPlotData == null) { return@withContext }
             internalPPData += letsPlotData
         }
     }
@@ -157,32 +159,32 @@ class ViewModel(
 
     private fun runHistogram() = coroutineScope.launch {
         withContext(Dispatchers.Default) {
-            val sortedData = data.sortedArray()
-            val condData = List(data.size) { "Empirical" }
+            val empirical = mapOf<String, Any?>(
+                "cond" to List(data.size) { "Empirical" },
+                "data" to data.sortedArray()
+            )
             val theoretical = letsPlotFromDists(
                 "data" to { data, dist -> Plotting.generateExpectedData(data.size, dist) }
             )
 
             internalHistogramTheoretical.clear()
-            internalHistogramTheoretical += theoretical
-
             internalHistogramEmpirical.clear()
-            internalHistogramEmpirical += mapOf<String, Any?>(
-                "cond" to condData,
-                "data" to sortedData.toList()
-            )
+            if (theoretical == null || data.isEmpty()) { return@withContext }
+            internalHistogramTheoretical += theoretical
+            internalHistogramEmpirical += empirical
         }
     }
 
     private fun letsPlotFromDists(
         vararg transformers: Pair<String, (DoubleArray, DistributionIfc<*>) -> DoubleArray>
-    ): Map<String, Any?> {
+    ): Map<String, Any?>? {
         val sortedData = data.sortedArray()
         val dists = internalTestResults.mapNotNull { distResult ->
             distResult.dist.getOrNull()?.let { dist ->
                 distResult.distType to dist
             }
         }
+        if (dists.isEmpty()) { return null }
         val cond = dists.flatMap { (distType, _) ->
             List(sortedData.size) { distType.distName }
         }

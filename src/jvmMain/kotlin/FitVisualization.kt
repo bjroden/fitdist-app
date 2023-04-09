@@ -2,12 +2,14 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 
 @Composable
@@ -32,13 +34,34 @@ fun FitVisualization(
                 }
             }
             when (state) {
-                0 -> PPPlot(ppData)
-                1 -> QQPlot(qqData)
-                2 -> Histogram(histogramTheoretical, histogramEmpirical)
+                0 -> showIf(qqData.isNotEmpty()) {
+                    PPPlot(ppData)
+                }
+                1 -> showIf (qqData.isNotEmpty()) {
+                    QQPlot(qqData)
+                }
+                2 -> showIf(histogramTheoretical.isNotEmpty() && histogramEmpirical.isNotEmpty()) {
+                    Histogram(histogramTheoretical, histogramEmpirical)
+                }
             }
             Text(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 text = "Text tab ${state + 1} selected",
+            )
+        }
+    }
+}
+
+@Composable
+fun showIf(cond: Boolean, plot: @Composable () -> Unit) {
+    if (cond) {
+        plot()
+    } else {
+        Box(Modifier.fillMaxSize()) {
+            Text(
+                text = "No results to display",
+                modifier = Modifier.align(Alignment.Center),
+                fontStyle = FontStyle.Italic
             )
         }
     }
