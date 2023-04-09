@@ -69,7 +69,12 @@ fun App(viewModel: ViewModel) {
                     DistRanking(testResults)
                 }
                 second(100.dp) {
-                    FitVisualization(viewModel.qqData, viewModel.ppData)
+                    FitVisualization(
+                        viewModel.qqData,
+                        viewModel.ppData,
+                        viewModel.histogramTheoretical,
+                        viewModel.histogramEmpirical
+                    )
                 }
                 splitter {
                     visiblePart {

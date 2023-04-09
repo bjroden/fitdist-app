@@ -110,6 +110,7 @@ class ViewModel(
     private fun reconstructPlots() = coroutineScope.launch {
         runQQData()
         runPPData()
+        runHistogram()
     }
 
     private val internalQQData = mutableStateMapOf<String, Any?>()
@@ -119,9 +120,9 @@ class ViewModel(
 
     private fun runQQData() = coroutineScope.launch {
         withContext(Dispatchers.Default) {
-            val letsPlotData = createLetsPlotData(
-                xTransformer = { data, dist -> Plotting.generateExpectedData(data.size, dist) },
-                yTransformer = { data, _ -> data }
+            val letsPlotData = letsPlotFromDists(
+                "Theoretical" to { data, dist -> Plotting.generateExpectedData(data.size, dist) },
+                "Empirical" to { data, _ -> data }
             )
             internalQQData.clear()
             internalQQData += letsPlotData
@@ -135,18 +136,46 @@ class ViewModel(
 
     private fun runPPData() = coroutineScope.launch {
         withContext(Dispatchers.Default) {
-            val letsPlotData = createLetsPlotData(
-                xTransformer = { data, _ -> Plotting.generateExpectedProbabilities(data.size) },
-                yTransformer = { data, dist -> Plotting.observedDataToProbabilities(data, dist) }
+            val letsPlotData = letsPlotFromDists(
+                "Theoretical" to { data, _ -> Plotting.generateExpectedProbabilities(data.size) },
+                "Empirical" to { data, dist -> Plotting.observedDataToProbabilities(data, dist) }
             )
             internalPPData.clear()
             internalPPData += letsPlotData
         }
     }
 
-    private fun createLetsPlotData(
-        xTransformer: (DoubleArray, DistributionIfc<*>) -> DoubleArray,
-        yTransformer: (DoubleArray, DistributionIfc<*>) -> DoubleArray
+    private val internalHistogramTheoretical = mutableStateMapOf<String, Any?>()
+
+    private val internalHistogramEmpirical = mutableStateMapOf<String, Any?>()
+
+    val histogramTheoretical
+        get() = internalHistogramTheoretical.toMap()
+
+    val histogramEmpirical
+        get() = internalHistogramEmpirical.toMap()
+
+    private fun runHistogram() = coroutineScope.launch {
+        withContext(Dispatchers.Default) {
+            val sortedData = data.sortedArray()
+            val condData = List(data.size) { "Empirical" }
+            val theoretical = letsPlotFromDists(
+                "data" to { data, dist -> Plotting.generateExpectedData(data.size, dist) }
+            )
+
+            internalHistogramTheoretical.clear()
+            internalHistogramTheoretical += theoretical
+
+            internalHistogramEmpirical.clear()
+            internalHistogramEmpirical += mapOf<String, Any?>(
+                "cond" to condData,
+                "data" to sortedData.toList()
+            )
+        }
+    }
+
+    private fun letsPlotFromDists(
+        vararg transformers: Pair<String, (DoubleArray, DistributionIfc<*>) -> DoubleArray>
     ): Map<String, Any?> {
         val sortedData = data.sortedArray()
         val dists = internalTestResults.mapNotNull { distResult ->
@@ -154,20 +183,15 @@ class ViewModel(
                 distResult.distType to dist
             }
         }
-        val cond = dists.flatMap { entry ->
-            List(sortedData.size) { entry.first.distName }
+        val cond = dists.flatMap { (distType, _) ->
+            List(sortedData.size) { distType.distName }
         }
-        val xs = dists.flatMap { entry ->
-            xTransformer(sortedData, entry.second).toList()
+        val data = transformers.associate { (key, transformer) ->
+            key to dists.flatMap { (_, dist) ->
+                transformer(sortedData, dist).toList()
+            }
         }
-        val ys = dists.flatMap { entry ->
-            yTransformer(sortedData, entry.second).toList()
-        }
-        return mapOf(
-            "cond" to cond,
-            "Theoretical" to xs,
-            "Empirical" to ys
-        )
+        return mapOf("cond" to cond) + data
     }
 
     fun toSession() = ViewModelSavedSession(

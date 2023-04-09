@@ -1,13 +1,9 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
 import jetbrains.datalore.plot.MonolithicCommon
 import jetbrains.datalore.vis.swing.batik.DefaultPlotPanelBatik
 import org.jetbrains.letsPlot.geom.geomDensity
@@ -20,28 +16,37 @@ import javax.swing.JPanel
 
 @Preview
 @Composable
-fun Histogram() {
+fun Histogram(
+    histogramTheoretical: Map<String, Any?>,
+    histogramEmpirical: Map<String, Any?>
+) {
     SwingPanel(
         background = Color.White,
         modifier = Modifier.fillMaxSize(1f),
         factory = {
             JPanel().apply {
                 layout = BoxLayout(this, BoxLayout.Y_AXIS)
-                add(histPlot())
+                add(histPlot(histogramTheoretical, histogramEmpirical))
             }
         }
     )
 }
 
-fun histPlot(): JPanel {
-    val rand = java.util.Random()
-    val n = 200
-    val data = mapOf<String, Any>(
-        "cond" to List(n) { "A" } + List(n) { "B" },
-        "rating" to List(n) { rand.nextGaussian() } + List(n) { rand.nextGaussian() * 1.5 + 1.5 },
+fun histPlot(
+    histogramTheoretical: Map<String, Any?>,
+    histogramEmpirical: Map<String, Any?>
+): JPanel {
+    // TODO: See if there is a better way of doing this
+    val dummy = mapOf<String, Any?>(
+        "cond" to emptyList<String>(),
+        "data" to emptyList<Number>()
     )
 
-    val plot = letsPlot(data) { x = "rating" } + ggsize(500, 250) + geomHistogram(binWidth=0.5, color="black", fill="white") { y = "..density.." } + geomDensity(alpha=0.2, fill=0xFF6666)
+    val plot =
+        letsPlot(dummy) { x = "data"; color = "cond" } +
+                ggsize(500, 250) +
+                geomHistogram(data = histogramEmpirical, binWidth=0.5, color="black", fill="white") { y = "..density.." } +
+                geomDensity(data = histogramTheoretical, alpha=0.2)
     val rawSpec = plot.toSpec()
     val processedSpec = MonolithicCommon.processRawSpecs(rawSpec, frontendOnly = false)
 

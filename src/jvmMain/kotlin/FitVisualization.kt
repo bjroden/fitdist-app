@@ -14,7 +14,9 @@ import androidx.compose.ui.text.style.TextOverflow
 @Preview
 fun FitVisualization(
     qqData: Map<String, Any?>,
-    ppData: Map<String, Any?>
+    ppData: Map<String, Any?>,
+    histogramTheoretical: Map<String, Any?>,
+    histogramEmpirical: Map<String, Any?>
 ) {
     var state by remember { mutableStateOf(0) }
     val titles = listOf("P-P Plot", "Q-Q Plot", "Histogram")
@@ -32,7 +34,7 @@ fun FitVisualization(
             when (state) {
                 0 -> PPPlot(ppData)
                 1 -> QQPlot(qqData)
-                2 -> Histogram()
+                2 -> Histogram(histogramTheoretical, histogramEmpirical)
             }
             Text(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
