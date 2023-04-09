@@ -82,9 +82,11 @@ fun DistSelection(
                     style = MaterialTheme.typography.headlineMedium
                 )
 
-                discreteSelection.forEach { (dist, value) ->
-                    DistEntry(dist, value, onSelect = onSelect)
-                }
+                discreteSelection
+                    .toSortedMap(compareBy { it.distName })
+                    .forEach { (dist, value) ->
+                        DistEntry(dist, value, onSelect = onSelect)
+                    }
 
                 Text(
                     text = "Continuous",
@@ -92,9 +94,11 @@ fun DistSelection(
                     style = MaterialTheme.typography.headlineMedium
                 )
 
-                continuousSelection.forEach { (dist, value) ->
-                    DistEntry(dist, value, onSelect = onSelect)
-                }
+                continuousSelection
+                    .toSortedMap(compareBy { it.distName })
+                    .forEach { (dist, value) ->
+                        DistEntry(dist, value, onSelect = onSelect)
+                    }
 
                 Button(onClick = onRun) {
                     Text(
