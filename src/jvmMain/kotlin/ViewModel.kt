@@ -108,93 +108,38 @@ class ViewModel(
     }
 
     private fun reconstructPlots() = coroutineScope.launch {
-        runQQData()
-        runPPData()
-        runHistogram()
-    }
-
-    private val internalQQData = mutableStateMapOf<String, Any?>()
-
-    val qqData
-        get() = internalQQData.toMap()
-
-    private fun runQQData() = coroutineScope.launch {
-        withContext(Dispatchers.Default) {
-            val letsPlotData = letsPlotFromDists(
-                "Theoretical" to { data, dist -> Plotting.generateExpectedData(data.size, dist) },
-                "Empirical" to { data, _ -> data }
-            )
-            internalQQData.clear()
-            if (letsPlotData == null) { return@withContext }
-            internalQQData += letsPlotData
-        }
-    }
-
-    private val internalPPData = mutableStateMapOf<String, Any?>()
-
-    val ppData
-        get() = internalPPData.toMap()
-
-    private fun runPPData() = coroutineScope.launch {
-        withContext(Dispatchers.Default) {
-            val letsPlotData = letsPlotFromDists(
-                "Theoretical" to { data, _ -> Plotting.generateExpectedProbabilities(data.size) },
-                "Empirical" to { data, dist -> Plotting.observedDataToProbabilities(data, dist) }
-            )
-            internalPPData.clear()
-            if (letsPlotData == null) { return@withContext }
-            internalPPData += letsPlotData
-        }
-    }
-
-    private val internalHistogramTheoretical = mutableStateMapOf<String, Any?>()
-
-    private val internalHistogramEmpirical = mutableStateMapOf<String, Any?>()
-
-    val histogramTheoretical
-        get() = internalHistogramTheoretical.toMap()
-
-    val histogramEmpirical
-        get() = internalHistogramEmpirical.toMap()
-
-    private fun runHistogram() = coroutineScope.launch {
-        withContext(Dispatchers.Default) {
-            val empirical = mapOf<String, Any?>(
-                "cond" to List(data.size) { "Empirical" },
-                "data" to data.sortedArray()
-            )
-            val theoretical = letsPlotFromDists(
-                "data" to { data, dist -> Plotting.generateExpectedData(data.size, dist) }
-            )
-
-            internalHistogramTheoretical.clear()
-            internalHistogramEmpirical.clear()
-            if (theoretical == null || data.isEmpty()) { return@withContext }
-            internalHistogramTheoretical += theoretical
-            internalHistogramEmpirical += empirical
-        }
-    }
-
-    private fun letsPlotFromDists(
-        vararg transformers: Pair<String, (DoubleArray, DistributionIfc<*>) -> DoubleArray>
-    ): Map<String, Any?>? {
-        val sortedData = data.sortedArray()
         val dists = internalTestResults.mapNotNull { distResult ->
-            distResult.dist.getOrNull()?.let { dist ->
+            distResult.dist.getOrNull()?.let {dist ->
                 distResult.distType to dist
             }
         }
-        if (dists.isEmpty()) { return null }
-        val cond = dists.flatMap { (distType, _) ->
-            List(sortedData.size) { distType.distName }
+        internalTheoreticalProbabilities.clear()
+        internalTheoreticalData.clear()
+        internalObservedProbabilities.clear()
+
+        internalTheoreticalProbabilities += dists.associate { (distType, _) ->
+            distType to Plotting.generateExpectedProbabilities(data.size)
         }
-        val data = transformers.associate { (key, transformer) ->
-            key to dists.flatMap { (_, dist) ->
-                transformer(sortedData, dist).toList()
-            }
+        internalTheoreticalData += dists.associate { (distType, dist) ->
+            distType to Plotting.generateExpectedData(data.size, dist)
         }
-        return mapOf("cond" to cond) + data
+        internalObservedProbabilities += dists.associate { (distType, dist) ->
+            distType to Plotting.observedDataToProbabilities(observedData, dist)
+        }
     }
+
+    private val internalTheoreticalProbabilities = mutableStateMapOf<DistributionType, DoubleArray>()
+    private val internalTheoreticalData = mutableStateMapOf<DistributionType, DoubleArray>()
+    private val internalObservedProbabilities = mutableStateMapOf<DistributionType, DoubleArray>()
+
+    val theoreticalProbabilities
+        get() = internalTheoreticalProbabilities.toMap()
+    val theoreticalData
+        get() = internalTheoreticalData.toMap()
+    val observedProbabilities
+        get() = internalObservedProbabilities.toMap()
+    val observedData
+        get() = data.sortedArray()
 
     fun toSession() = ViewModelSavedSession(
         data,

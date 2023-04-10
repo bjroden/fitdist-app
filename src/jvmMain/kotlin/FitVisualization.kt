@@ -11,14 +11,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
+import estimations.DistributionType
 
 @Composable
 @Preview
 fun FitVisualization(
-    qqData: Map<String, Any?>,
-    ppData: Map<String, Any?>,
-    histogramTheoretical: Map<String, Any?>,
-    histogramEmpirical: Map<String, Any?>
+    theoreticalProbabilities: Map<DistributionType, DoubleArray>,
+    theoreticalData: Map<DistributionType, DoubleArray>,
+    observedProbabilities: Map<DistributionType, DoubleArray>,
+    observedData: DoubleArray
 ) {
     var state by remember { mutableStateOf(0) }
     val titles = listOf("P-P Plot", "Q-Q Plot", "Histogram")
@@ -34,14 +35,14 @@ fun FitVisualization(
                 }
             }
             when (state) {
-                0 -> showIf(qqData.isNotEmpty()) {
-                    PPPlot(ppData)
+                0 -> showIf(theoreticalProbabilities.isNotEmpty() && observedProbabilities.isNotEmpty()) {
+                    PPPlot(theoreticalProbabilities, observedProbabilities)
                 }
-                1 -> showIf (qqData.isNotEmpty()) {
-                    QQPlot(qqData)
+                1 -> showIf (theoreticalData.isNotEmpty() && observedData.isNotEmpty()) {
+                    QQPlot(theoreticalData, observedData)
                 }
-                2 -> showIf(histogramTheoretical.isNotEmpty() && histogramEmpirical.isNotEmpty()) {
-                    Histogram(histogramTheoretical, histogramEmpirical)
+                2 -> showIf(theoreticalData.isNotEmpty() && observedData.isNotEmpty()) {
+                    Histogram(theoreticalData, observedData)
                 }
             }
             Text(

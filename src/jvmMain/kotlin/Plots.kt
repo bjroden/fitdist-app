@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.graphics.Color
+import estimations.DistributionType
 import jetbrains.datalore.plot.MonolithicCommon
 import jetbrains.datalore.vis.swing.batik.DefaultPlotPanelBatik
 import org.jetbrains.letsPlot.geom.*
@@ -17,7 +18,8 @@ import javax.swing.JPanel
 @Composable
 @Preview
 fun QQPlot(
-    data: Map<String, Any?>
+    theoreticalData: Map<DistributionType, DoubleArray>,
+    observedData: DoubleArray
 ) {
     SwingPanel(
         background = Color.White,
@@ -25,7 +27,7 @@ fun QQPlot(
         factory = {
             JPanel().apply {
                 layout = BoxLayout(this, BoxLayout.Y_AXIS)
-                add(qqPlotJPanel(data))
+                add(qqPlotJPanel(theoreticalData, observedData))
             }
         }
     )
@@ -34,7 +36,8 @@ fun QQPlot(
 @Composable
 @Preview
 fun PPPlot(
-    data: Map<String, Any?>
+    theoreticalProbabilities: Map<DistributionType, DoubleArray>,
+    observedProbabilities: Map<DistributionType, DoubleArray>
 ) {
     SwingPanel(
         background = Color.White,
@@ -42,18 +45,30 @@ fun PPPlot(
         factory = {
             JPanel().apply {
                 layout = BoxLayout(this, BoxLayout.Y_AXIS)
-                add(ppPlotJPanel(data))
+                add(ppPlotJPanel(theoreticalProbabilities, observedProbabilities))
             }
         }
     )
 }
 
 fun ppPlotJPanel(
-    data: Map<String, Any?>
+    theoreticalProbabilities: Map<DistributionType, DoubleArray>,
+    observedProbabilities: Map<DistributionType, DoubleArray>
 ): JPanel {
     // TODO: Verify if we should be using geomQQ2 functions for P-P plot
     //  Particularly, the line with this doesn't go straight from 0 to 1, which is the case
     //  for all other P-P plots we've seen
+    val data = mapOf<String, Any>(
+        "cond" to theoreticalProbabilities.flatMap { (distType, values) ->
+            List(values.size) { distType.name }
+        },
+        "Theoretical" to theoreticalProbabilities.flatMap { (_, values) ->
+            values.toList()
+        },
+        "Empirical" to observedProbabilities.flatMap { (_, values) ->
+            values.toList()
+        }
+    )
     val plot = letsPlot(data) { x = "Theoretical"; y = "Empirical"; color = "cond" } + geomQQ2(size = 4, alpha = .7) +
             geomQQ2Line(size = 1, color="#000000")
 
@@ -61,8 +76,19 @@ fun ppPlotJPanel(
 }
 
 fun qqPlotJPanel(
-    data: Map<String, Any?>
+    theoreticalData: Map<DistributionType, DoubleArray>,
+    observedData: DoubleArray
 ): JPanel{
+    val data = mapOf<String, Any>(
+        "cond" to theoreticalData.flatMap { (distType, values) ->
+            List(values.size) { distType.name }
+        },
+        "Theoretical" to theoreticalData.flatMap { (_, values) ->
+            values.toList()
+        },
+        "Empirical" to List(theoreticalData.size) { observedData.toList() }.flatten()
+    )
+
     val plot = letsPlot(data) { x = "Theoretical"; y = "Empirical"; color = "cond" } + geomQQ2(size = 4, alpha = .7) +
             geomQQ2Line(size = 1, color="#000000")
 
