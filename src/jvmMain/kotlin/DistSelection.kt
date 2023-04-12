@@ -6,16 +6,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import estimations.DistributionType
 
@@ -100,6 +99,10 @@ fun DistSelection(
                         DistEntry(dist, value, onSelect = onSelect)
                     }
 
+                TestWeight("Chi-Squared Test") { binWidth() }
+
+                TestWeight("K-S Test")
+
                 Button(onClick = onRun) {
                     Text(
                         text = "Run",
@@ -114,6 +117,79 @@ fun DistSelection(
             modifier = Modifier.align(Alignment.CenterEnd)
                 .fillMaxHeight(),
             adapter = rememberScrollbarAdapter(stateVertical)
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+@Preview
+fun TestWeight(testName: String, content: @Composable() () -> Unit = {}) {
+    val (checkedState, onStateChange) = remember { mutableStateOf(false) }
+    Card {
+        Column {
+            Row(
+                Modifier
+                    .padding(5.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+
+                Box(
+                    Modifier
+                        .toggleable(
+                            value = checkedState,
+                            onValueChange = { onStateChange(!checkedState) },
+                            role = Role.Checkbox
+                        )
+                ) {
+                    Checkbox(
+                        checked = checkedState,
+                        onCheckedChange = null // null recommended for accessibility with screen readers
+                    )
+                }
+
+                Divider(
+                    color = Color.Black,
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(1.dp)
+                )
+
+                Box {
+                    Text(
+                        text = testName
+                    )
+                }
+            }
+            Box {
+                var text by rememberSaveable { mutableStateOf("") }
+
+                TextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    label = { Text("Weight", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    placeholder = { Text("0") },
+                    singleLine = true
+                )
+            }
+            content()
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+@Preview
+fun binWidth() {
+    Box{
+        var text by rememberSaveable { mutableStateOf("") }
+
+        TextField(
+            value = text,
+            onValueChange = { text = it },
+            label = { Text("Bin Width", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+            placeholder = { Text("0") },
+            singleLine = true
         )
     }
 }
