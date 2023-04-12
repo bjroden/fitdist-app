@@ -44,7 +44,7 @@ private fun Modifier.cursorForHorizontalResize(): Modifier =
 @Preview
 fun App(viewModel: ViewModel) {
     MaterialTheme {
-        val splitterState = rememberSplitPaneState()
+        val splitterState = rememberSplitPaneState(initialPositionPercentage = 0.6f, moveEnabled = true)
 
         val continuousDists = viewModel.continuousDistSelection
         val discreteDists = viewModel.discreteSelection
