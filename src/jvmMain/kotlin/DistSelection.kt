@@ -69,7 +69,7 @@ fun DistSelection(
                 .fillMaxHeight()
                 .width(200.dp)
                 .verticalScroll(stateVertical)
-                .padding(end = 12.dp, bottom = 12.dp)
+                .padding(end = 12.dp)
         ) {
             Column(Modifier
                 .padding(0.dp),
