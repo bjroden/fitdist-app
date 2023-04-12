@@ -8,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import goodnessoffit.AbstractGofTest
@@ -18,15 +19,26 @@ import goodnessoffit.KolmogorovSmirnovGofTest
 @Composable
 @Preview
 fun DistRanking(results: List<DistResult>) {
-    Column(Modifier
-        .padding(10.dp),
-        Arrangement.spacedBy(5.dp)
-    ) {
-        LazyColumn (
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+    if (results.isEmpty()) {
+        Box(Modifier.fillMaxSize()){
+            Text(
+                text = "No results to display",
+                modifier = Modifier.align(Alignment.Center),
+                fontStyle = FontStyle.Italic
+            )
+        }
+    }
+    else {
+        Column(Modifier
+            .padding(10.dp),
+            Arrangement.spacedBy(5.dp)
         ) {
-            items(results) { eval ->
-                EvalDisplay(eval)
+            LazyColumn (
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                items(results) { eval ->
+                    EvalDisplay(eval)
+                }
             }
         }
     }
