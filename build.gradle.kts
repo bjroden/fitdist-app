@@ -1,9 +1,9 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
-    kotlin("multiplatform")
-    id("org.jetbrains.compose") version "1.3.0"
-    kotlin("plugin.serialization") version "1.7.21"
+    kotlin("multiplatform") version "1.8.10"
+    id("org.jetbrains.compose") version "1.3.1"
+    kotlin("plugin.serialization") version "1.8.10"
 }
 
 group = "com.example"
