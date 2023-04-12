@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -50,26 +51,28 @@ fun EvalDisplay(result: DistResult) {
     Card {
         Row(
             Modifier
-                .padding(10.dp),
+                .padding(10.dp)
+                .fillMaxWidth(1f),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(25.dp)
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
                 result.distType.distName,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.width(100.dp)
+                modifier = Modifier.width(200.dp),
+                style = MaterialTheme.typography.headlineMedium
             )
             Text(
                 result.distGoodness,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.width(50.dp)
+                modifier = Modifier.width(150.dp)
             )
             result.dist.onSuccess {
                 Column(
                     Modifier
-                        .width(175.dp)
+                        .width(300.dp)
                 ) {
                     result.tests.forEach { testResult ->
                         testResult.onSuccess { test ->
@@ -101,7 +104,7 @@ fun EvalDisplay(result: DistResult) {
             }.onFailure {
                 Column(
                     Modifier
-                        .width(175.dp)
+                        .width(300.dp)
                 ) {
                     Text("")
                     Text(
