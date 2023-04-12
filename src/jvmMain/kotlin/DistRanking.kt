@@ -30,16 +30,12 @@ fun DistRanking(results: List<DistResult>) {
         }
     }
     else {
-        Column(Modifier
-            .padding(10.dp),
-            Arrangement.spacedBy(5.dp)
+        LazyColumn (
+            Modifier.padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            LazyColumn (
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(results) { eval ->
-                    EvalDisplay(eval)
-                }
+            items(results) { eval ->
+                EvalDisplay(eval)
             }
         }
     }
@@ -67,7 +63,7 @@ fun EvalDisplay(result: DistResult) {
                 result.distGoodness,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.width(150.dp)
+                modifier = Modifier.width(300.dp)
             )
             result.dist.onSuccess {
                 Column(

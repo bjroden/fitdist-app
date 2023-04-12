@@ -3,8 +3,8 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.UndecoratedWindowAlertDialogProvider.AlertDialog
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import com.example.compose.AppTheme
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -43,57 +44,62 @@ private fun Modifier.cursorForHorizontalResize(): Modifier =
 @Composable
 @Preview
 fun App(viewModel: ViewModel) {
-    MaterialTheme {
+    AppTheme() {
         val splitterState = rememberSplitPaneState(initialPositionPercentage = 0.6f, moveEnabled = true)
 
         val continuousDists = viewModel.continuousDistSelection
         val discreteDists = viewModel.discreteSelection
         val testResults = viewModel.testResults
-
-        Row(Modifier.fillMaxSize(), Arrangement.spacedBy(5.dp)) {
-            Box {
-                DistSelection(
-                    continuousSelection = continuousDists,
-                    discreteSelection = discreteDists,
-                    onSelect = { dist, newSelectedValue ->
-                        viewModel.distributionSelected(dist, newSelectedValue)
-                    },
-                    onRun = { viewModel.runResults() }
-                )
-            }
-
-            HorizontalSplitPane(
-                splitPaneState = splitterState
-            ) {
-                first(205.dp) {
-                    DistRanking(testResults)
-                }
-                second(100.dp) {
-                    FitVisualization(
-                        viewModel.qqData,
-                        viewModel.ppData,
-                        viewModel.histogramTheoretical,
-                        viewModel.histogramEmpirical
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        ){
+            Row(Modifier.fillMaxSize(), Arrangement.spacedBy(5.dp)) {
+                Box {
+                    DistSelection(
+                        continuousSelection = continuousDists,
+                        discreteSelection = discreteDists,
+                        onSelect = { dist, newSelectedValue ->
+                            viewModel.distributionSelected(dist, newSelectedValue)
+                        },
+                        onRun = { viewModel.runResults() }
                     )
                 }
-                splitter {
-                    visiblePart {
-                        Box(
-                            Modifier
-                                .width(1.dp)
-                                .fillMaxHeight()
-                                .background(MaterialTheme.colors.background)
+
+                HorizontalSplitPane(
+                    splitPaneState = splitterState
+                ) {
+                    first(205.dp) {
+                        DistRanking(testResults)
+                    }
+                    second(100.dp) {
+                        FitVisualization(
+                            viewModel.qqData,
+                            viewModel.ppData,
+                            viewModel.histogramTheoretical,
+                            viewModel.histogramEmpirical
                         )
                     }
-                    handle {
-                        Box(
-                            Modifier
-                                .markAsHandle()
-                                .cursorForHorizontalResize()
-                                .background(SolidColor(Color.Gray), alpha = 0.50f)
-                                .width(9.dp)
-                                .fillMaxHeight()
-                        )
+                    splitter {
+                        visiblePart {
+                            Box(
+                                Modifier
+                                    .width(1.dp)
+                                    .fillMaxHeight()
+                                    .background(MaterialTheme.colorScheme.background)
+                            )
+                        }
+                        handle {
+                            Box(
+                                Modifier
+                                    .markAsHandle()
+                                    .cursorForHorizontalResize()
+                                    .background(SolidColor(Color.Gray), alpha = 0.50f)
+                                    .width(9.dp)
+                                    .fillMaxHeight()
+                            )
+                        }
                     }
                 }
             }
