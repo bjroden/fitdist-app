@@ -63,12 +63,12 @@ fun EvalDisplay(result: DistResult) {
                 "Score: %.6f".format(result.score),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.width(300.dp)
+                modifier = Modifier.width(150.dp)
             )
             result.dist.onSuccess {
                 Column(
                     Modifier
-                        .width(300.dp)
+                        .width(400.dp)
                 ) {
                     result.tests.forEach { testResult ->
                         testResult.onSuccess { test ->
