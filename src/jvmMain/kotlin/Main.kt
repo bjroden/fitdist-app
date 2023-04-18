@@ -2,21 +2,19 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.UndecoratedWindowAlertDialogProvider.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -36,7 +34,6 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 
-@OptIn(ExperimentalComposeUiApi::class)
 private fun Modifier.cursorForHorizontalResize(): Modifier =
     pointerHoverIcon(PointerIcon(Cursor(Cursor.E_RESIZE_CURSOR)))
 
@@ -107,7 +104,6 @@ fun App(viewModel: ViewModel) {
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 fun main() = application {
     val windowTitle = "FitDistApp"
     Window(
@@ -116,7 +112,7 @@ fun main() = application {
     ) {
         val coroutineScope = rememberCoroutineScope()
         var viewModel by remember { mutableStateOf(ViewModel(doubleArrayOf(), coroutineScope)) }
-        val openDialog = remember { mutableStateOf(false) }
+        val openJsonDialog = remember { mutableStateOf(false) }
 
         MenuBar {
             Menu("File", mnemonic = 'F') {
@@ -145,7 +141,7 @@ fun main() = application {
                         // TODO: Trigger an error message / dialog on invalid json.
                         //  The Compose AlertDialog is a composable function, so Main will need to be adjusted
                         //  to manage dialog state if we use that
-                        openDialog.value = true
+                        openJsonDialog.value = true
                         return@Item
                     }
                     viewModel = ViewModel(json, coroutineScope)
@@ -154,31 +150,29 @@ fun main() = application {
         }
 
         // Alert Dialog Trigger for invalid JSON
-        if(openDialog.value) {
-            AlertDialog(
-                onDismissRequest = {
-                    openDialog.value = false
-                }
+        Dialog(
+            visible = openJsonDialog.value,
+            resizable = false,
+            onCloseRequest = { openJsonDialog.value = false }
+        ) {
+            Surface(
+                modifier = Modifier
+                    .wrapContentWidth()
+                    .wrapContentHeight(),
+                shape = MaterialTheme.shapes.large
             ) {
-                Surface(
-                    modifier = Modifier
-                        .wrapContentWidth()
-                        .wrapContentHeight(),
-                    shape = MaterialTheme.shapes.large
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "The JSON file that you imported is invalid.",
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                        TextButton(
-                            onClick = {
-                                openDialog.value = false
-                            },
-                            modifier = Modifier.align(Alignment.End)
-                        ) {
-                            Text("Confirm")
-                        }
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "The JSON file that you imported is invalid.",
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    TextButton(
+                        onClick = {
+                            openJsonDialog.value = false
+                        },
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text("Confirm")
                     }
                 }
             }
