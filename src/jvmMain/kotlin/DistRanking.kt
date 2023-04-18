@@ -60,7 +60,7 @@ fun EvalDisplay(result: DistResult) {
                 style = MaterialTheme.typography.headlineMedium
             )
             Text(
-                result.distGoodness,
+                "Score: %.6f".format(result.score),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.width(300.dp)
@@ -88,13 +88,6 @@ fun EvalDisplay(result: DistResult) {
                                 )
                             }
                         }
-                    }
-                    Row {
-                        Text(
-                            "Score: ${formatDecimal(result.score)}",
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
                     }
                 }
             }.onFailure {

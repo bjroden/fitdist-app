@@ -12,6 +12,7 @@ import kotlinx.serialization.Serializable
 import ksl.utilities.distributions.ContinuousDistributionIfc
 import ksl.utilities.distributions.DiscreteDistributionIfc
 import ksl.utilities.distributions.DistributionIfc
+import ksl.utilities.statistic.Histogram
 import plotting.Plotting
 import kotlin.reflect.full.isSubclassOf
 
@@ -19,8 +20,7 @@ class DistResult(
     val distType: DistributionType,
     val dist: Result<DistributionIfc<*>>,
     val tests: List<Result<AbstractGofTest>>,
-    val distGoodness: String = "Goodness still needed", // TODO: Remove hardcoded value
-    val score: Double = 0.0 // TODO: Remove hardcoded value
+    val score: Double
 )
 
 @Serializable
@@ -82,7 +82,8 @@ class ViewModel(
                     when (dist) {
                         is ContinuousDistributionIfc -> {
                             val chiSquareTest = runCatching { GofFactory().continuousTest(
-                                ChiSquareRequest(), data, dist)
+                                // TODO: Use breakpoints from UI
+                                ChiSquareRequest(Histogram.recommendBreakPoints(data)), data, dist)
                             }
                             val ksTest = runCatching { GofFactory().continuousTest(
                                 KSRequest, data, dist)
@@ -91,14 +92,19 @@ class ViewModel(
                         }
                         is DiscreteDistributionIfc -> {
                             val chiSquareTest = runCatching { GofFactory().discreteTest(
-                                ChiSquareRequest(), data, dist)
+                                // TODO: Use breakpoints from UI
+                                ChiSquareRequest(Histogram.recommendBreakPoints(data)), data, dist)
                             }
                             listOf(chiSquareTest)
                         }
                         else -> emptyList()
                     }
                 }.getOrElse { emptyList() }
-                DistResult(distType, dist, tests)
+                // TODO: use weights from UI
+                val score = tests.sumOf { 0.5 * (it.getOrNull()?.universalScore ?: 0.0) }
+                DistResult(distType, dist, tests, score)
+            }.sortedByDescending {
+                it.score
             }
 
             internalTestResults.clear()
