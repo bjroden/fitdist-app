@@ -69,35 +69,44 @@ fun DistSelection(
                 .fillMaxHeight()
                 .width(200.dp)
                 .verticalScroll(stateVertical)
-                .padding(end = 12.dp, bottom = 12.dp)
+                .padding(end = 12.dp)
         ) {
             Column(Modifier
                 .padding(0.dp),
                 Arrangement.spacedBy(5.dp)) {
 
-                Text(
-                    text = "Discrete",
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.headlineMedium
-                )
+                Card(){
 
-                discreteSelection
-                    .toSortedMap(compareBy { it.distName })
-                    .forEach { (dist, value) ->
-                        DistEntry(dist, value, onSelect = onSelect)
-                    }
+                    Text(
+                        modifier = Modifier.fillMaxWidth(1f),
+                        text = "Discrete",
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.headlineSmall
+                    )
 
-                Text(
-                    text = "Continuous",
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.headlineMedium
-                )
+                    discreteSelection
+                        .toSortedMap(compareBy { it.distName })
+                        .forEach { (dist, value) ->
+                            DistEntry(dist, value, onSelect = onSelect)
+                        }
 
-                continuousSelection
-                    .toSortedMap(compareBy { it.distName })
-                    .forEach { (dist, value) ->
-                        DistEntry(dist, value, onSelect = onSelect)
-                    }
+                }
+
+                Card{
+                    Text(
+                        modifier = Modifier.fillMaxWidth(1f),
+                        text = "Continuous",
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+
+                    continuousSelection
+                        .toSortedMap(compareBy { it.distName })
+                        .forEach { (dist, value) ->
+                            DistEntry(dist, value, onSelect = onSelect)
+                        }
+                }
+
 
                 TestWeight("Chi-Squared Test") { binWidth() }
 
@@ -147,13 +156,6 @@ fun TestWeight(testName: String, content: @Composable() () -> Unit = {}) {
                         onCheckedChange = null // null recommended for accessibility with screen readers
                     )
                 }
-
-                Divider(
-                    color = Color.Black,
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .width(1.dp)
-                )
 
                 Box {
                     Text(
