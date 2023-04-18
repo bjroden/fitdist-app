@@ -1,9 +1,9 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
-    kotlin("multiplatform") version "1.8.10"
-    id("org.jetbrains.compose") version "1.3.1"
-    kotlin("plugin.serialization") version "1.8.10"
+    kotlin("multiplatform") version "1.8.20"
+    id("org.jetbrains.compose") version "1.4.0"
+    kotlin("plugin.serialization") version "1.8.20"
 }
 
 group = "com.example"
@@ -24,8 +24,8 @@ kotlin {
         val jvmMain by getting {
             dependencies {
                 implementation(compose.desktop.currentOs)
-                implementation("org.jetbrains.compose.material3:material3-desktop:1.3.1")
-                implementation("org.jetbrains.compose.components:components-splitpane-desktop:1.3.1")
+                implementation("org.jetbrains.compose.material3:material3-desktop:1.4.0")
+                implementation("org.jetbrains.compose.components:components-splitpane-desktop:1.4.0")
                 implementation("org.jetbrains.lets-plot:lets-plot-batik:3.1.0")
                 implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.3.0")
                 implementation("org.jetbrains.kotlinx:dataframe:0.9.1")
