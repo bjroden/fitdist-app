@@ -1,48 +1,52 @@
-
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.layout.size
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import jetbrains.datalore.plot.MonolithicCommon
 import jetbrains.datalore.vis.swing.batik.DefaultPlotPanelBatik
-import org.jetbrains.kotlinx.dataframe.DataFrame
-import org.jetbrains.kotlinx.dataframe.api.toMap
-import org.jetbrains.kotlinx.dataframe.io.readCSV
-import org.jetbrains.letsPlot.geom.geomQQ
-import org.jetbrains.letsPlot.geom.geomQQLine
+import org.jetbrains.letsPlot.geom.geomDensity
+import org.jetbrains.letsPlot.geom.geomHistogram
+import org.jetbrains.letsPlot.ggsize
 import org.jetbrains.letsPlot.intern.toSpec
-import org.jetbrains.letsPlot.label.ggtitle
 import org.jetbrains.letsPlot.letsPlot
 import javax.swing.BoxLayout
 import javax.swing.JPanel
 
-
-@Composable
 @Preview
-fun QQPlot() {
+@Composable
+fun Histogram(
+    histogramTheoretical: Map<String, Any?>,
+    histogramEmpirical: Map<String, Any?>
+) {
     SwingPanel(
         background = Color.White,
-        modifier = Modifier.size(600.dp, 600.dp),
+        modifier = Modifier.fillMaxSize(1f),
         factory = {
             JPanel().apply {
                 layout = BoxLayout(this, BoxLayout.Y_AXIS)
-                add(plot())
+                add(histPlot(histogramTheoretical, histogramEmpirical))
             }
         }
     )
 }
 
-fun plot(): JPanel{
-    val mpg = DataFrame.readCSV("https://raw.githubusercontent.com/JetBrains/lets-plot-kotlin/master/docs/examples/data/mpg.csv")
-    val map = mpg.toMap()
-    val plot = letsPlot(map) {sample = "hwy"} + geomQQ(size = 5, color = "#3d3d3d", alpha = .3) +
-            geomQQLine(size = 1) +
-            ggtitle("Distribution of highway miles per gallon",
-                "Comparison of sample quantiles with normal distribution quantiles")
+fun histPlot(
+    histogramTheoretical: Map<String, Any?>,
+    histogramEmpirical: Map<String, Any?>
+): JPanel {
+    // TODO: See if there is a better way of doing this
+    val dummy = mapOf<String, Any?>(
+        "cond" to emptyList<String>(),
+        "data" to emptyList<Number>()
+    )
 
+    val plot =
+        letsPlot(dummy) { x = "data"; color = "cond" } +
+                ggsize(500, 250) +
+                geomHistogram(data = histogramEmpirical, binWidth=0.5, color="black", fill="white") { y = "..density.." } +
+                geomDensity(data = histogramTheoretical, alpha=0.2)
     val rawSpec = plot.toSpec()
     val processedSpec = MonolithicCommon.processRawSpecs(rawSpec, frontendOnly = false)
 
