@@ -83,7 +83,7 @@ fun EvalDisplay(result: DistResult) {
                             Row {
                                 Text(
                                     "Test Failed: ${error.message}",
-                                    maxLines = 1,
+                                    maxLines = 2,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
@@ -98,7 +98,7 @@ fun EvalDisplay(result: DistResult) {
                     Text("")
                     Text(
                         "Distribution is Invalid: ${it.message}",
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text("")
