@@ -46,7 +46,7 @@ fun App(viewModel: ViewModel) {
 
         val continuousDists = viewModel.continuousDistSelection
         val discreteDists = viewModel.discreteSelection
-        val testResults = viewModel.testResults
+        val testResults = viewModel.distResults
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -70,7 +70,9 @@ fun App(viewModel: ViewModel) {
                     splitPaneState = splitterState
                 ) {
                     first(205.dp) {
-                        DistRanking(testResults)
+                        // TODO: probably want to pass the nullable runResults in here,
+                        //  and have it display bin width data from last run
+                        DistRanking(testResults ?: emptyList())
                     }
                     second(100.dp) {
                         FitVisualization(

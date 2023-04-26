@@ -1,5 +1,5 @@
 
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import estimations.DistributionType
@@ -37,7 +37,13 @@ class DistResult(
 @Serializable
 class ViewModelSavedSession(
     val data: DoubleArray,
+    val binWidth: Double,
     val selectedDists: Collection<DistributionType>
+)
+
+data class RunResults(
+    val binWidth: Double,
+    val distResults: Collection<DistResult>
 )
 
 @Serializable
@@ -58,6 +64,10 @@ class ViewModel(
         coroutineScope: CoroutineScope
     ) : this(session.data, coroutineScope) {
         session.selectedDists.forEach { internalDistSelection[it] = true }
+        internalBinWidthData.value = NumberInputData(
+            session.binWidth.toString(),
+            session.binWidth
+        )
         runResults()
     }
 
@@ -80,16 +90,19 @@ class ViewModel(
         get() = internalDistSelection.filterValues { it }.keys
 
     val resultsSelection
-        get() = internalTestResults.map { it.distType }
+        get() = runResults?.distResults?.map { it.distType }
 
     fun distributionSelected(distType: DistributionType, newSelectedValue: Boolean) {
         internalDistSelection.replace(distType, newSelectedValue)
     }
 
-    private val internalTestResults = mutableStateListOf<DistResult>()
+    private var internalRunResults: MutableState<RunResults?> = mutableStateOf(null)
 
-    val testResults
-        get() = internalTestResults.toList()
+    val runResults
+        get() = internalRunResults.value
+
+    val distResults
+        get() = runResults?.distResults?.toList()
 
     fun runResults() = replaceResults(currentSelection)
 
@@ -127,16 +140,16 @@ class ViewModel(
                 it.score
             }
 
-            internalTestResults.clear()
-            internalTestResults.addAll(results)
-            reconstructPlots()
+            val runResults = RunResults(currentBinWidth, results)
+            internalRunResults.value = runResults
+            reconstructPlots(runResults)
         }
     }
 
-    private fun reconstructPlots() = coroutineScope.launch {
-        runQQData()
-        runPPData()
-        runHistogram()
+    private fun reconstructPlots(runResults: RunResults) = coroutineScope.launch {
+        runQQData(runResults)
+        runPPData(runResults)
+        runHistogram(runResults)
     }
 
     sealed interface PlotResult
@@ -156,9 +169,10 @@ class ViewModel(
                     geomQQ2Line(size = 1, color="#000000")
         )
 
-    private fun runQQData() = coroutineScope.launch {
+    private fun runQQData(runResults: RunResults) = coroutineScope.launch {
         withContext(Dispatchers.Default) {
             val letsPlotData = letsPlotFromDists(
+                runResults,
                 "Theoretical" to { data, dist -> Plotting.generateExpectedData(data.size, dist) },
                 "Empirical" to { data, _ -> data }
             )
@@ -184,9 +198,10 @@ class ViewModel(
             PlotError("No data imported")
         }
 
-    private fun runPPData() = coroutineScope.launch {
+    private fun runPPData(runResults: RunResults) = coroutineScope.launch {
         withContext(Dispatchers.Default) {
             val letsPlotData = letsPlotFromDists(
+                runResults,
                 "Theoretical" to { data, _ -> Plotting.generateExpectedProbabilities(data.size) },
                 "Empirical" to { data, dist -> Plotting.observedDataToProbabilities(data, dist) }
             )
@@ -211,7 +226,7 @@ class ViewModel(
         get() = if(internalHistogramEmpirical.isNotEmpty() && internalHistogramTheoretical.isNotEmpty()) {
             PlotSuccess(letsPlot(dummy) { x = "data"; color = "cond" } +
                     ggsize(500, 250) +
-                    geomHistogram(data = histogramEmpirical, binWidth=0.5, color="black", fill="white") { y = "..density.." } +
+                    geomHistogram(data = histogramEmpirical, binWidth=runResults?.binWidth, color="black", fill="white") { y = "..density.." } +
                     geomDensity(data = histogramTheoretical, alpha=0.2)
             )
         } else {
@@ -221,13 +236,14 @@ class ViewModel(
     val histogramEmpirical
         get() = internalHistogramEmpirical.toMap()
 
-    private fun runHistogram() = coroutineScope.launch {
+    private fun runHistogram(runResults: RunResults) = coroutineScope.launch {
         withContext(Dispatchers.Default) {
             val empirical = mapOf<String, Any?>(
                 "cond" to List(data.size) { "Empirical" },
                 "data" to data.sortedArray()
             )
             val theoretical = letsPlotFromDists(
+                runResults,
                 "data" to { data, dist -> Plotting.generateExpectedData(data.size, dist) }
             )
 
@@ -240,10 +256,11 @@ class ViewModel(
     }
 
     private fun letsPlotFromDists(
+        runResults: RunResults,
         vararg transformers: Pair<String, (DoubleArray, DistributionIfc<*>) -> DoubleArray>
     ): Map<String, Any?>? {
         val sortedData = data.sortedArray()
-        val dists = internalTestResults.mapNotNull { distResult ->
+        val dists = runResults.distResults.mapNotNull { distResult ->
             distResult.dist.getOrNull()?.let { dist ->
                 distResult.distType to dist
             }
@@ -262,8 +279,8 @@ class ViewModel(
 
     private val internalBinWidthData = mutableStateOf(
         NumberInputData(
-            defaultBins().toString(),
-            defaultBins(),
+            defaultBinWidth().toString(),
+            defaultBinWidth(),
         )
     )
 
@@ -280,7 +297,7 @@ class ViewModel(
         internalBinWidthData.value = NumberInputData(newValue, newDouble)
     }
 
-    private fun defaultBins() = runCatching {
+    private fun defaultBinWidth() = runCatching {
         val breaks = Histogram.recommendBreakPoints(data)
         breaks[1] - breaks[0]
     }.getOrElse {
@@ -298,9 +315,12 @@ class ViewModel(
         return arr
     }
 
+    // TODO: probably want to make this nullable too, and have the save button give an error if no test was run.
+    //  Will require changing the alert dialog to instead use swing error dialogs
     fun toSession() = ViewModelSavedSession(
         data,
-        resultsSelection // Save last ran distributions, ignore selections made after
+        internalRunResults.value?.binWidth ?: defaultBinWidth(),
+        resultsSelection ?: emptyList() // Save last ran distributions, ignore selections made after
     )
 
     // Converts to StateFlow instead of Flow, since StateFlow refreshes compose UI properly
