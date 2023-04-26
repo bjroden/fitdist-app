@@ -55,7 +55,9 @@ fun DistSelection(
     continuousSelection: Map<DistributionType, Boolean> = emptyMap(),
     discreteSelection: Map<DistributionType, Boolean> = emptyMap(),
     onSelect: (DistributionType, Boolean) -> Unit = { _, _ -> },
-    onRun: () -> Unit = {}
+    onRun: () -> Unit = {},
+    binWidthData: NumberInputData,
+    binWidthOnValueChange: (String) -> Unit
 ) {
     Box(
         modifier = Modifier.fillMaxHeight()
@@ -108,7 +110,10 @@ fun DistSelection(
                 }
 
 
-                TestWeight("Chi-Squared Test") { binWidth() }
+                TestWeight("Chi-Squared Test") { binWidth(
+                    binWidthData,
+                    binWidthOnValueChange
+                ) }
 
                 TestWeight("K-S Test")
 
@@ -182,15 +187,19 @@ fun TestWeight(testName: String, content: @Composable() () -> Unit = {}) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
-fun binWidth() {
-    Box{
-        var text by rememberSaveable { mutableStateOf("") }
+fun binWidth(
+    data: NumberInputData,
+    onValueChange: (String) -> Unit
+) {
+    Box {
+        val validInputPattern = Regex("""\d*\.?\d*""")
 
         TextField(
-            value = text,
-            onValueChange = { text = it },
+            value = data.text,
+            onValueChange = { if (validInputPattern.matches(it)) { onValueChange(it) } },
             label = { Text("Bin Width", maxLines = 1, overflow = TextOverflow.Ellipsis) },
-            placeholder = { Text("0") },
+            placeholder = { Text("Number > 0") },
+            isError = data.isError,
             singleLine = true
         )
     }

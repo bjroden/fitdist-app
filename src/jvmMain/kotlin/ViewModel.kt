@@ -1,6 +1,7 @@
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import estimations.DistributionType
 import estimations.EstimationFactory
 import goodnessoffit.AbstractGofTest
@@ -13,9 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.Serializable
-import ksl.utilities.distributions.ContinuousDistributionIfc
-import ksl.utilities.distributions.DiscreteDistributionIfc
-import ksl.utilities.distributions.DistributionIfc
+import ksl.utilities.distributions.*
 import ksl.utilities.statistic.Histogram
 import org.jetbrains.letsPlot.geom.geomDensity
 import org.jetbrains.letsPlot.geom.geomHistogram
@@ -25,6 +24,7 @@ import org.jetbrains.letsPlot.ggsize
 import org.jetbrains.letsPlot.intern.Plot
 import org.jetbrains.letsPlot.letsPlot
 import plotting.Plotting
+import kotlin.math.ceil
 import kotlin.reflect.full.isSubclassOf
 
 class DistResult(
@@ -39,6 +39,15 @@ class ViewModelSavedSession(
     val data: DoubleArray,
     val selectedDists: Collection<DistributionType>
 )
+
+@Serializable
+data class NumberInputData(
+    val text: String,
+    val computedValue: Double?
+) {
+    val isError
+        get() = computedValue == null
+}
 
 class ViewModel(
     val data: DoubleArray,
@@ -85,6 +94,8 @@ class ViewModel(
     fun runResults() = replaceResults(currentSelection)
 
     private fun replaceResults(dists: Set<DistributionType>) = coroutineScope.launch {
+        val currentBinWidth = binWidthData.computedValue ?: return@launch
+        val bins = getBins(currentBinWidth)
         withContext(Dispatchers.Default) {
             val results = dists.map { distType ->
                 // TODO: Library should handle runCatching for dist
@@ -93,8 +104,7 @@ class ViewModel(
                     when (dist) {
                         is ContinuousDistributionIfc -> {
                             val chiSquareTest = runCatching { GofFactory().continuousTest(
-                                // TODO: Use breakpoints from UI
-                                ChiSquareRequest(Histogram.recommendBreakPoints(data)), data, dist)
+                                ChiSquareRequest(bins), data, dist)
                             }
                             val ksTest = runCatching { GofFactory().continuousTest(
                                 KSRequest, data, dist)
@@ -103,8 +113,7 @@ class ViewModel(
                         }
                         is DiscreteDistributionIfc -> {
                             val chiSquareTest = runCatching { GofFactory().discreteTest(
-                                // TODO: Use breakpoints from UI
-                                ChiSquareRequest(Histogram.recommendBreakPoints(data)), data, dist)
+                                ChiSquareRequest(bins), data, dist)
                             }
                             listOf(chiSquareTest)
                         }
@@ -249,6 +258,44 @@ class ViewModel(
             }
         }
         return mapOf("cond" to cond) + data
+    }
+
+    private val internalBinWidthData = mutableStateOf(
+        NumberInputData(
+            defaultBins().toString(),
+            defaultBins(),
+        )
+    )
+
+    val binWidthData
+        get() = internalBinWidthData.value
+
+    fun onBinWidthTextChange(newValue: String) {
+        val computedDouble = newValue.toDoubleOrNull()
+        val newDouble = if (computedDouble?.let { it > 0 } == true) {
+            computedDouble
+        } else {
+            null
+        }
+        internalBinWidthData.value = NumberInputData(newValue, newDouble)
+    }
+
+    private fun defaultBins() = runCatching {
+        val breaks = Histogram.recommendBreakPoints(data)
+        breaks[1] - breaks[0]
+    }.getOrElse {
+        1.0
+    }
+
+    private fun getBins(width: Double): DoubleArray {
+        val numBins = ceil(data.max() / data.min()).toInt()
+        val arr = DoubleArray(numBins)
+        var value = data.min()
+        for (i in arr.indices) {
+            arr[i] = value
+            value += width
+        }
+        return arr
     }
 
     fun toSession() = ViewModelSavedSession(

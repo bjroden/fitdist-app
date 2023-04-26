@@ -60,7 +60,9 @@ fun App(viewModel: ViewModel) {
                         onSelect = { dist, newSelectedValue ->
                             viewModel.distributionSelected(dist, newSelectedValue)
                         },
-                        onRun = { viewModel.runResults() }
+                        onRun = { viewModel.runResults() },
+                        binWidthData = viewModel.binWidthData,
+                        binWidthOnValueChange = { viewModel.onBinWidthTextChange(it) }
                     )
                 }
 
