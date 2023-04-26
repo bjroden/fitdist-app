@@ -315,13 +315,13 @@ class ViewModel(
         return arr
     }
 
-    // TODO: probably want to make this nullable too, and have the save button give an error if no test was run.
-    //  Will require changing the alert dialog to instead use swing error dialogs
-    fun toSession() = ViewModelSavedSession(
-        data,
-        internalRunResults.value?.binWidth ?: defaultBinWidth(),
-        resultsSelection ?: emptyList() // Save last ran distributions, ignore selections made after
-    )
+    fun toSession() = runResults?.let { results ->
+        ViewModelSavedSession(
+            data,
+            results.binWidth,
+            results.distResults.map { it.distType } // Save last ran distributions, ignore selections made after
+        )
+    }
 
     // Converts to StateFlow instead of Flow, since StateFlow refreshes compose UI properly
     @OptIn(ExperimentalCoroutinesApi::class)

@@ -30,6 +30,7 @@ import java.awt.Cursor
 import java.awt.FileDialog
 import java.io.File
 import java.nio.file.Path
+import javax.swing.JOptionPane
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
@@ -127,11 +128,14 @@ fun main() = application {
                     viewModel = ViewModel(data, coroutineScope)
                 })
                 Item("Save", onClick = {
+                    val session = viewModel.toSession() ?: run {
+                        JOptionPane.showMessageDialog(window, "Cannot save session: no results exist")
+                        return@Item
+                    }
                     val path = FileDialog(window, "Select a file to save session to", FileDialog.SAVE)
                         .getPath()
                         ?: return@Item
-                    val json = Json.encodeToString(viewModel.toSession())
-                    path.writeText(json)
+                    path.writeText(Json.encodeToString(session))
                 })
                 Item("Load", onClick = {
                     val string = FileDialog(window, "Load Saved Session", FileDialog.LOAD)
