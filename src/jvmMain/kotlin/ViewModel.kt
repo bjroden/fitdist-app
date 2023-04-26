@@ -1,3 +1,4 @@
+
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import estimations.DistributionType
@@ -7,12 +8,22 @@ import goodnessoffit.ChiSquareRequest
 import goodnessoffit.GofFactory
 import goodnessoffit.KSRequest
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.Serializable
 import ksl.utilities.distributions.ContinuousDistributionIfc
 import ksl.utilities.distributions.DiscreteDistributionIfc
 import ksl.utilities.distributions.DistributionIfc
 import ksl.utilities.statistic.Histogram
+import org.jetbrains.letsPlot.geom.geomDensity
+import org.jetbrains.letsPlot.geom.geomHistogram
+import org.jetbrains.letsPlot.geom.geomQQ2
+import org.jetbrains.letsPlot.geom.geomQQ2Line
+import org.jetbrains.letsPlot.ggsize
+import org.jetbrains.letsPlot.intern.Plot
+import org.jetbrains.letsPlot.letsPlot
 import plotting.Plotting
 import kotlin.reflect.full.isSubclassOf
 
@@ -119,10 +130,22 @@ class ViewModel(
         runHistogram()
     }
 
+    sealed interface PlotResult
+
+    class PlotSuccess(val plot: Plot): PlotResult
+    class PlotError(val error: String): PlotResult
+
     private val internalQQData = mutableStateMapOf<String, Any?>()
 
     val qqData
         get() = internalQQData.toMap()
+
+    val qqPlot
+        get() = PlotSuccess(
+            letsPlot(qqData) { x = "Theoretical"; y = "Empirical"; color = "cond" } +
+                    geomQQ2(size = 4, alpha = .7) +
+                    geomQQ2Line(size = 1, color="#000000")
+        )
 
     private fun runQQData() = coroutineScope.launch {
         withContext(Dispatchers.Default) {
@@ -140,6 +163,17 @@ class ViewModel(
 
     val ppData
         get() = internalPPData.toMap()
+
+    val ppPlot
+        get() = if(internalQQData.isNotEmpty()) {
+            PlotSuccess(
+                letsPlot(ppData) { x = "Theoretical"; y = "Empirical"; color = "cond" } +
+                        geomQQ2(size = 4, alpha = .7) +
+                        geomQQ2Line(size = 1, color="#000000")
+            )
+        } else {
+            PlotError("No data imported")
+        }
 
     private fun runPPData() = coroutineScope.launch {
         withContext(Dispatchers.Default) {
@@ -159,6 +193,21 @@ class ViewModel(
 
     val histogramTheoretical
         get() = internalHistogramTheoretical.toMap()
+
+    val dummy = mapOf<String, Any?>(
+        "cond" to emptyList<String>(),
+        "data" to emptyList<Number>()
+    )
+    val histogramPlot
+        get() = if(internalHistogramEmpirical.isNotEmpty() && internalHistogramTheoretical.isNotEmpty()) {
+            PlotSuccess(letsPlot(dummy) { x = "data"; color = "cond" } +
+                    ggsize(500, 250) +
+                    geomHistogram(data = histogramEmpirical, binWidth=0.5, color="black", fill="white") { y = "..density.." } +
+                    geomDensity(data = histogramTheoretical, alpha=0.2)
+            )
+        } else {
+            PlotError("No data imported.")
+        }
 
     val histogramEmpirical
         get() = internalHistogramEmpirical.toMap()

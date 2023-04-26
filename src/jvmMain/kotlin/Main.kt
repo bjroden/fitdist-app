@@ -72,10 +72,9 @@ fun App(viewModel: ViewModel) {
                     }
                     second(100.dp) {
                         FitVisualization(
-                            viewModel.qqData,
-                            viewModel.ppData,
-                            viewModel.histogramTheoretical,
-                            viewModel.histogramEmpirical
+                            viewModel.qqPlot,
+                            viewModel.ppPlot,
+                            viewModel.histogramPlot
                         )
                     }
                     splitter {

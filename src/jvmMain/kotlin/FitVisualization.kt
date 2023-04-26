@@ -15,53 +15,43 @@ import androidx.compose.ui.text.style.TextOverflow
 @Composable
 @Preview
 fun FitVisualization(
-    qqData: Map<String, Any?>,
-    ppData: Map<String, Any?>,
-    histogramTheoretical: Map<String, Any?>,
-    histogramEmpirical: Map<String, Any?>
+    qqPlot: ViewModel.PlotResult,
+    ppPlot: ViewModel.PlotResult,
+    histogramPlot: ViewModel.PlotResult
 ) {
-    var state by remember { mutableStateOf(0) }
+    var tabState by remember { mutableStateOf(0) }
     val titles = listOf("P-P Plot", "Q-Q Plot", "Histogram")
     Box {
         Column {
-            TabRow(selectedTabIndex = state) {
+            TabRow(selectedTabIndex = tabState) {
                 titles.forEachIndexed { index, title ->
                     Tab(
-                        selected = state == index,
-                        onClick = { state = index },
+                        selected = tabState == index,
+                        onClick = { tabState = index },
                         text = { Text(text = title, maxLines = 2, overflow = TextOverflow.Ellipsis) }
                     )
                 }
             }
-            when (state) {
-                0 -> showIf(qqData.isNotEmpty()) {
-                    PPPlot(ppData)
-                }
-                1 -> showIf (qqData.isNotEmpty()) {
-                    QQPlot(qqData)
-                }
-                2 -> showIf(histogramTheoretical.isNotEmpty() && histogramEmpirical.isNotEmpty()) {
-                    Histogram(histogramTheoretical, histogramEmpirical)
+            var plotRendered = when (tabState) {
+                0 -> ppPlot
+                1 -> qqPlot
+                2 -> histogramPlot
+                else -> ViewModel.PlotError("illegal tab")
+            }
+            if (plotRendered is ViewModel.PlotSuccess) {
+                plotPanel(plotRendered.plot)
+            } else {
+                Box(Modifier.fillMaxSize()) {
+                    Text(
+                        text = "No results to display",
+                        modifier = Modifier.align(Alignment.Center),
+                        fontStyle = FontStyle.Italic
+                    )
                 }
             }
             Text(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
-                text = "Text tab ${state + 1} selected",
-            )
-        }
-    }
-}
-
-@Composable
-fun showIf(cond: Boolean, plot: @Composable () -> Unit) {
-    if (cond) {
-        plot()
-    } else {
-        Box(Modifier.fillMaxSize()) {
-            Text(
-                text = "No results to display",
-                modifier = Modifier.align(Alignment.Center),
-                fontStyle = FontStyle.Italic
+                text = "Text tab ${tabState + 1} selected",
             )
         }
     }
