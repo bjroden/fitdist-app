@@ -2,12 +2,10 @@
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import datascoring.DataScoring
 import estimations.DistributionType
 import estimations.EstimationFactory
-import goodnessoffit.AbstractGofTest
-import goodnessoffit.ChiSquareRequest
-import goodnessoffit.GofFactory
-import goodnessoffit.KSRequest
+import goodnessoffit.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -38,19 +36,34 @@ class DistResult(
 class ViewModelSavedSession(
     val data: DoubleArray,
     val binWidth: Double,
-    val selectedDists: Collection<DistributionType>
+    val selectedDists: Collection<DistributionType>,
+    val testWeights: Map<GofTestType, TestWeightData>
 )
 
 data class RunResults(
     val binWidth: Double,
+    val testWeights: Map<GofTestType, TestWeightData>,
     val distResults: Collection<DistResult>
 )
+
+@Serializable
+data class TestWeightData(
+    val selected: Boolean,
+    val numberInputData: NumberInputData
+)
+
+enum class GofTestType(val testName: String) {
+    ChiSquare("Chi-Squared test"),
+    KS("K-S test")
+}
 
 @Serializable
 data class NumberInputData(
     val text: String,
     val computedValue: Double?
 ) {
+    constructor(computedValue: Double) : this(computedValue.toString(), computedValue)
+
     val isError
         get() = computedValue == null
 }
@@ -68,6 +81,8 @@ class ViewModel(
             session.binWidth.toString(),
             session.binWidth
         )
+        internalTestWeights.clear()
+        internalTestWeights += session.testWeights
         runResults()
     }
 
@@ -96,7 +111,7 @@ class ViewModel(
         internalDistSelection.replace(distType, newSelectedValue)
     }
 
-    private var internalRunResults: MutableState<RunResults?> = mutableStateOf(null)
+    private val internalRunResults: MutableState<RunResults?> = mutableStateOf(null)
 
     val runResults
         get() = internalRunResults.value
@@ -106,41 +121,89 @@ class ViewModel(
 
     fun runResults() = replaceResults(currentSelection)
 
+    private var internalTestWeights = mutableStateMapOf(
+        *GofTestType.values().map {
+            it to TestWeightData(true, NumberInputData(1.0 / GofTestType.values().size))
+        }.sortedBy { (type, _) -> type.testName }
+            .toTypedArray()
+    )
+
+    val testWeights
+        get() = internalTestWeights.toMap()
+
+    fun onWeightSelected(testType: GofTestType, selected: Boolean) {
+        val oldValue = internalTestWeights[testType]
+        oldValue?.copy(selected = selected)?.let { internalTestWeights[testType] = it }
+    }
+
+    fun onGofWeightValueChange(testType: GofTestType, newValue: String) {
+        val oldValue = internalTestWeights[testType]
+        val newDouble = newValue.toDoubleOrNull()?.let {
+            if (it in 0.0..1.0) { it }
+            else { null }
+        }
+        oldValue?.copy(numberInputData = NumberInputData(newValue, newDouble))
+            ?.let { internalTestWeights[testType] = it }
+    }
+
     private fun replaceResults(dists: Set<DistributionType>) = coroutineScope.launch {
-        val currentBinWidth = binWidthData.computedValue ?: return@launch
-        val bins = getBins(currentBinWidth)
         withContext(Dispatchers.Default) {
+            val currentBinWidth = binWidthData.computedValue ?: return@withContext
+            val bins = getBins(currentBinWidth)
+            val tests = testWeights
+                .filter { (_, data) -> data.selected }
+                .mapNotNull { (type, data) ->
+                    if (data.selected) {
+                        data.numberInputData.computedValue?.let { type to it }
+                    } else {
+                        null
+                    }
+                }.toMap()
+            val requests = tests.map { (type, score) ->
+                val request = when (type) {
+                    GofTestType.ChiSquare -> ChiSquareRequest(bins)
+                    GofTestType.KS -> KSRequest
+                }
+                request to score
+            }.toMap()
+
             val results = dists.map { distType ->
                 // TODO: Library should handle runCatching for dist
                 val dist = runCatching { EstimationFactory.getDistribution(distType, data).getOrThrow() }
                 val tests = dist.map { dist ->
                     when (dist) {
                         is ContinuousDistributionIfc -> {
-                            val chiSquareTest = runCatching { GofFactory().continuousTest(
-                                ChiSquareRequest(bins), data, dist)
+                            val continuousRequests = requests.mapNotNull { (request, score) ->
+                                val continuousRequest = request as? ContinuousRequest<*>
+                                continuousRequest?.let { it to score }
                             }
-                            val ksTest = runCatching { GofFactory().continuousTest(
-                                KSRequest, data, dist)
+                            continuousRequests.map { (request, score) ->
+                                val test = runCatching { GofFactory().continuousTest(request, data, dist) }
+                                test to score
                             }
-                            listOf(chiSquareTest, ksTest)
                         }
                         is DiscreteDistributionIfc -> {
-                            val chiSquareTest = runCatching { GofFactory().discreteTest(
-                                ChiSquareRequest(bins), data, dist)
+                            val discreteRequests = requests.mapNotNull { (request, score) ->
+                                val discreteRequest = request as? DiscreteRequest<*>
+                                discreteRequest?.let { it to score }
                             }
-                            listOf(chiSquareTest)
+                            discreteRequests.map { (request, score) ->
+                                val test = runCatching { GofFactory().discreteTest(request, data, dist) }
+                                test to score
+                            }
                         }
                         else -> emptyList()
                     }
                 }.getOrElse { emptyList() }
-                // TODO: use weights from UI
-                val score = tests.sumOf { 0.5 * (it.getOrNull()?.universalScore ?: 0.0) }
-                DistResult(distType, dist, tests, score)
+                val score = DataScoring.scoreTests(
+                    *tests.mapNotNull { (request, score) -> request.getOrNull()?.let { it to score }
+                }.toTypedArray())
+                DistResult(distType, dist, tests.map { it.first }, score)
             }.sortedByDescending {
                 it.score
             }
 
-            val runResults = RunResults(currentBinWidth, results)
+            val runResults = RunResults(currentBinWidth, testWeights, results)
             internalRunResults.value = runResults
             reconstructPlots(runResults)
         }
@@ -319,7 +382,8 @@ class ViewModel(
         ViewModelSavedSession(
             data,
             results.binWidth,
-            results.distResults.map { it.distType } // Save last ran distributions, ignore selections made after
+            results.distResults.map { it.distType }, // Save last ran distributions, ignore selections made after
+            results.testWeights
         )
     }
 

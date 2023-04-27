@@ -63,7 +63,10 @@ fun App(viewModel: ViewModel) {
                         },
                         onRun = { viewModel.runResults() },
                         binWidthData = viewModel.binWidthData,
-                        binWidthOnValueChange = { viewModel.onBinWidthTextChange(it) }
+                        binWidthOnValueChange = { viewModel.onBinWidthTextChange(it) },
+                        testWeights = viewModel.testWeights,
+                        onTestWeightChange = { type, weight -> viewModel.onGofWeightValueChange(type, weight) },
+                        onTestSelected = { type, selected -> viewModel.onWeightSelected(type, selected) }
                     )
                 }
 

@@ -8,7 +8,6 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -57,7 +56,10 @@ fun DistSelection(
     onSelect: (DistributionType, Boolean) -> Unit = { _, _ -> },
     onRun: () -> Unit = {},
     binWidthData: NumberInputData,
-    binWidthOnValueChange: (String) -> Unit
+    binWidthOnValueChange: (String) -> Unit,
+    testWeights: Map<GofTestType, TestWeightData>,
+    onTestWeightChange: (GofTestType, String) -> Unit,
+    onTestSelected: (GofTestType, Boolean) -> Unit
 ) {
     Box(
         modifier = Modifier.fillMaxHeight()
@@ -110,12 +112,23 @@ fun DistSelection(
                 }
 
 
-                TestWeight("Chi-Squared Test") { binWidth(
-                    binWidthData,
-                    binWidthOnValueChange
-                ) }
+                // TODO: redo card to make this pretty
+                NumberInput(
+                    label = "Bin Width",
+                    data = binWidthData,
+                    placeHolder = "n > 0",
+                    onValueChange = binWidthOnValueChange
+                )
 
-                TestWeight("K-S Test")
+                testWeights.forEach { (testType, testWeightData) ->
+                    TestWeight(
+                        testType = testType,
+                        testWeightData = testWeightData,
+                        onSelect = onTestSelected,
+                        onValueChange = onTestWeightChange
+                    )
+
+                }
 
                 Button(onClick = onRun) {
                     Text(
@@ -138,8 +151,12 @@ fun DistSelection(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
-fun TestWeight(testName: String, content: @Composable() () -> Unit = {}) {
-    val (checkedState, onStateChange) = remember { mutableStateOf(false) }
+fun TestWeight(
+    testType: GofTestType,
+    testWeightData: TestWeightData,
+    onValueChange: (GofTestType, String) -> Unit = { _, _ -> },
+    onSelect: (GofTestType, Boolean) -> Unit = { _, _ -> }
+) {
     Card {
         Column {
             Row(
@@ -151,35 +168,31 @@ fun TestWeight(testName: String, content: @Composable() () -> Unit = {}) {
                 Box(
                     Modifier
                         .toggleable(
-                            value = checkedState,
-                            onValueChange = { onStateChange(!checkedState) },
+                            value = testWeightData.selected,
+                            onValueChange = { onSelect(testType, !testWeightData.selected) },
                             role = Role.Checkbox
                         )
                 ) {
                     Checkbox(
-                        checked = checkedState,
+                        checked = testWeightData.selected,
                         onCheckedChange = null // null recommended for accessibility with screen readers
                     )
                 }
 
                 Box {
                     Text(
-                        text = testName
+                        text = testType.testName
                     )
                 }
             }
             Box {
-                var text by rememberSaveable { mutableStateOf("") }
-
-                TextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    label = { Text("Weight", maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                    placeholder = { Text("0") },
-                    singleLine = true
+                NumberInput(
+                    label = testType.testName,
+                    data = testWeightData.numberInputData,
+                    placeHolder = "0 < x < 1",
+                    onValueChange = { onValueChange(testType, it) }
                 )
             }
-            content()
         }
     }
 }
@@ -187,9 +200,11 @@ fun TestWeight(testName: String, content: @Composable() () -> Unit = {}) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
-fun binWidth(
+fun NumberInput(
+    label: String,
     data: NumberInputData,
-    onValueChange: (String) -> Unit
+    placeHolder: String? = null,
+    onValueChange: (String) -> Unit = {}
 ) {
     Box {
         val validInputPattern = Regex("""\d*\.?\d*""")
@@ -197,8 +212,8 @@ fun binWidth(
         TextField(
             value = data.text,
             onValueChange = { if (validInputPattern.matches(it)) { onValueChange(it) } },
-            label = { Text("Bin Width", maxLines = 1, overflow = TextOverflow.Ellipsis) },
-            placeholder = { Text("Number > 0") },
+            label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+            placeholder = { placeHolder?.let { Text(it) } },
             isError = data.isError,
             singleLine = true
         )
