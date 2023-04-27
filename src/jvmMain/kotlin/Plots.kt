@@ -21,7 +21,7 @@ fun plotPanel(plot: Plot) {
         processedSpec = processedSpec,
         preserveAspectRatio = true,
         preferredSizeFromPlot = false,
-        repaintDelay = 10,
+        repaintDelay = 100,
     ) { messages ->
         for (message in messages) {
             println("[Example App] $message")
