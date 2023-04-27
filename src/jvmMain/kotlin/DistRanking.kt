@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import goodnessoffit.AbstractGofTest
 import goodnessoffit.ChiSquareGofTest
 import goodnessoffit.KolmogorovSmirnovGofTest
+import goodnessoffit.PValueIfc
 
 // TODO: Figure out weird behavior with K-S Test on expansion
 @Composable
@@ -79,8 +80,14 @@ fun EvalDisplay(result: DistResult) {
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
-                            Row {
-
+                            if (test is PValueIfc){
+                                Row {
+                                    Text(
+                                        "P-Value: ${formatDecimal(test.pValue)}",
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
                             }
                         }.onFailure { error ->
                             Row {
@@ -98,13 +105,11 @@ fun EvalDisplay(result: DistResult) {
                     Modifier
                         .width(400.dp)
                 ) {
-                    Text("")
                     Text(
                         "Distribution is Invalid: ${it.message}",
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Text("")
                 }
             }
         }
