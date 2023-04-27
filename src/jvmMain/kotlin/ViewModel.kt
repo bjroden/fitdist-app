@@ -368,7 +368,7 @@ class ViewModel(
     }
 
     private fun getBins(width: Double): DoubleArray {
-        val numBins = ceil(data.max() / data.min()).toInt()
+        val numBins = ceil((data.max() - data.min()) / width).toInt()
         val arr = DoubleArray(numBins)
         var value = data.min()
         for (i in arr.indices) {
