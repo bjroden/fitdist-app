@@ -7,7 +7,7 @@ import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -113,13 +113,14 @@ fun DistSelection(
                 }
 
 
-                // TODO: redo card to make this pretty
-                NumberInput(
-                    label = "Bin Width",
-                    data = binWidthData,
-                    placeHolder = "n > 0",
-                    onValueChange = binWidthOnValueChange
-                )
+                Card {
+                    NumberInput(
+                        label = "Bin Width",
+                        data = binWidthData,
+                        placeHolder = "n > 0",
+                        onValueChange = binWidthOnValueChange
+                    )
+                }
 
                 testWeights.forEach { (testType, testWeightData) ->
                     TestWeight(
