@@ -14,9 +14,9 @@ import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import ksl.utilities.io.KSLFileUtil
+import ksl.utilities.random.rvariable.GammaRV
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import org.jetbrains.compose.splitpane.HorizontalSplitPane
 import org.jetbrains.compose.splitpane.rememberSplitPaneState
@@ -27,7 +27,6 @@ import java.io.File
 import java.nio.file.Path
 import javax.swing.JOptionPane
 import kotlin.io.path.readText
-import kotlin.io.path.writeText
 
 
 private fun Modifier.cursorForHorizontalResize(): Modifier =
@@ -37,7 +36,7 @@ private fun Modifier.cursorForHorizontalResize(): Modifier =
 @Composable
 @Preview
 fun App(viewModel: ViewModel) {
-    AppTheme() {
+    AppTheme(false,) {
         val splitterState = rememberSplitPaneState(initialPositionPercentage = 0.6f, moveEnabled = true)
 
         val continuousDists = viewModel.continuousDistSelection
@@ -126,14 +125,17 @@ fun main() = application {
                     viewModel = ViewModel(data, coroutineScope)
                 })
                 Item("Save", onClick = {
-                    val session = viewModel.toSession() ?: run {
-                        JOptionPane.showMessageDialog(window, "Cannot save session: no results exist")
-                        return@Item
-                    }
+
+                    //val session = viewModel.toSession() ?: run {
+                    //    JOptionPane.showMessageDialog(window, "Cannot save session: no results exist")
+                    //    return@Item
+                    //}
                     val path = FileDialog(window, "Select a file to save session to", FileDialog.SAVE)
                         .getPath()
                         ?: return@Item
-                    path.writeText(Json.encodeToString(session))
+                    val randomSample = GammaRV(4.0, 5.0).sample(200)
+                    KSLFileUtil.writeToFile(randomSample, path)
+
                 })
                 Item("Load", onClick = {
                     val string = FileDialog(window, "Load Saved Session", FileDialog.LOAD)
