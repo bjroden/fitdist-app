@@ -79,6 +79,9 @@ fun EvalDisplay(result: DistResult) {
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
+                            Row {
+
+                            }
                         }.onFailure { error ->
                             Row {
                                 Text(
@@ -93,7 +96,7 @@ fun EvalDisplay(result: DistResult) {
             }.onFailure {
                 Column(
                     Modifier
-                        .width(300.dp)
+                        .width(400.dp)
                 ) {
                     Text("")
                     Text(
