@@ -234,11 +234,15 @@ class ViewModel(
         get() = internalQQData.toMap()
 
     val qqPlot
-        get() = PlotSuccess(
-            letsPlot(qqData) { x = "Theoretical"; y = "Empirical"; color = "cond" } +
-                    geomQQ2(size = 4, alpha = .7) +
-                    geomQQ2Line(size = 1, color="#000000")
-        )
+        get() = if(internalQQData.isNotEmpty()) {
+            PlotSuccess(
+                letsPlot(qqData) { x = "Theoretical"; y = "Empirical"; color = "cond" } +
+                        geomQQ2(size = 4, alpha = .7) +
+                        geomQQ2Line(size = 1, color="#000000")
+            )
+        } else {
+            PlotError("No data imported")
+        }
 
     private fun runQQData(runResults: RunResults) = coroutineScope.launch {
         withContext(Dispatchers.Default) {
