@@ -57,6 +57,7 @@ fun App(viewModel: ViewModel) {
                             viewModel.distributionSelected(dist, newSelectedValue)
                         },
                         onRun = { viewModel.runResults() },
+                        runButtonEnabled = viewModel.runButtonEnabled,
                         binWidthData = viewModel.binWidthData,
                         binWidthOnValueChange = { viewModel.onBinWidthTextChange(it) },
                         testWeights = viewModel.testWeights,

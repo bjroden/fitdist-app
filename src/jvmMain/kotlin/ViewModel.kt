@@ -146,6 +146,14 @@ class ViewModel(
             ?.let { internalTestWeights[testType] = it }
     }
 
+    val runButtonEnabled
+        get() = data.isNotEmpty() &&
+                currentSelection.isNotEmpty() &&
+                !binWidthData.isError &&
+                testWeights.any { it.value.selected } &&
+                testWeights.filter { it.value.selected }
+                    .all { !it.value.numberInputData.isError }
+
     private fun replaceResults(dists: Set<DistributionType>) = coroutineScope.launch {
         withContext(Dispatchers.Default) {
             val currentBinWidth = binWidthData.computedValue ?: return@withContext

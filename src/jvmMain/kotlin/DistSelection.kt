@@ -55,6 +55,7 @@ fun DistSelection(
     discreteSelection: Map<DistributionType, Boolean> = emptyMap(),
     onSelect: (DistributionType, Boolean) -> Unit = { _, _ -> },
     onRun: () -> Unit = {},
+    runButtonEnabled: Boolean,
     binWidthData: NumberInputData,
     binWidthOnValueChange: (String) -> Unit,
     testWeights: Map<GofTestType, TestWeightData>,
@@ -130,7 +131,7 @@ fun DistSelection(
 
                 }
 
-                Button(onClick = onRun) {
+                Button(onClick = onRun, enabled = runButtonEnabled) {
                     Text(
                         text = "Run",
                         textAlign = TextAlign.Center,
