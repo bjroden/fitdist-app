@@ -14,19 +14,21 @@ import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import ksl.utilities.io.KSLFileUtil
-import ksl.utilities.random.rvariable.GammaRV
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import org.jetbrains.compose.splitpane.HorizontalSplitPane
 import org.jetbrains.compose.splitpane.rememberSplitPaneState
 import ui.theme.AppTheme
 import java.awt.Cursor
 import java.awt.FileDialog
+import java.awt.TrayIcon.MessageType
 import java.io.File
 import java.nio.file.Path
 import javax.swing.JOptionPane
 import kotlin.io.path.readText
+import kotlin.io.path.writeText
 
 
 private fun Modifier.cursorForHorizontalResize(): Modifier =
@@ -122,20 +124,22 @@ fun main() = application {
                         .getPath()
                         ?: return@Item
                     val data = KSLFileUtil.scanToArray(path)
-                    viewModel = ViewModel(data, coroutineScope)
+                    if (data.isNotEmpty()) {
+                        JOptionPane.showMessageDialog(window, "Data imported successfully")
+                        viewModel = ViewModel(data, coroutineScope)
+                    } else {
+                        JOptionPane.showMessageDialog(window, "Data is invalid", "Invalid data", MessageType.ERROR.ordinal)
+                    }
                 })
                 Item("Save", onClick = {
-
-                    //val session = viewModel.toSession() ?: run {
-                    //    JOptionPane.showMessageDialog(window, "Cannot save session: no results exist")
-                    //    return@Item
-                    //}
+                    val session = viewModel.toSession() ?: run {
+                        JOptionPane.showMessageDialog(window, "Cannot save session: no results exist")
+                        return@Item
+                    }
                     val path = FileDialog(window, "Select a file to save session to", FileDialog.SAVE)
                         .getPath()
                         ?: return@Item
-                    val randomSample = GammaRV(4.0, 5.0).sample(200)
-                    KSLFileUtil.writeToFile(randomSample, path)
-
+                    path.writeText(Json.encodeToString(session))
                 })
                 Item("Load", onClick = {
                     val string = FileDialog(window, "Load Saved Session", FileDialog.LOAD)
@@ -149,6 +153,9 @@ fun main() = application {
                         return@Item
                     }
                     viewModel = ViewModel(json, coroutineScope)
+                })
+                Item("Clear data", onClick = {
+                    viewModel = ViewModel(doubleArrayOf(), coroutineScope)
                 })
             }
         }
