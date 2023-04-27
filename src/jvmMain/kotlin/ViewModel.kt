@@ -14,10 +14,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.Serializable
 import ksl.utilities.distributions.*
 import ksl.utilities.statistic.Histogram
-import org.jetbrains.letsPlot.geom.geomDensity
-import org.jetbrains.letsPlot.geom.geomHistogram
-import org.jetbrains.letsPlot.geom.geomQQ2
-import org.jetbrains.letsPlot.geom.geomQQ2Line
+import org.jetbrains.letsPlot.geom.*
 import org.jetbrains.letsPlot.ggsize
 import org.jetbrains.letsPlot.intern.Plot
 import org.jetbrains.letsPlot.letsPlot
@@ -247,8 +244,8 @@ class ViewModel(
         get() = if(internalQQData.isNotEmpty()) {
             PlotSuccess(
                 letsPlot(qqData) { x = "Theoretical"; y = "Empirical"; color = "cond" } +
-                        geomQQ2(size = 4, alpha = .7) +
-                        geomQQ2Line(size = 1, color="#000000")
+                        geomPoint(size = 4, alpha = .7) +
+                        geomABLine(slope = 1, intercept = 0, size = 1, color="#000000")
             )
         } else {
             PlotError("No data imported")
@@ -276,8 +273,8 @@ class ViewModel(
         get() = if(internalQQData.isNotEmpty()) {
             PlotSuccess(
                 letsPlot(ppData) { x = "Theoretical"; y = "Empirical"; color = "cond" } +
-                        geomQQ2(size = 4, alpha = .7) +
-                        geomQQ2Line(size = 1, color="#000000")
+                        geomPoint(size = 4, alpha = .7) +
+                        geomABLine(slope = 1, intercept = 0, size = 1, color="#000000")
             )
         } else {
             PlotError("No data imported")
