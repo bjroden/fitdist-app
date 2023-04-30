@@ -23,6 +23,7 @@ import org.jetbrains.compose.splitpane.rememberSplitPaneState
 import ui.theme.AppTheme
 import java.awt.Cursor
 import java.awt.FileDialog
+import java.awt.TrayIcon.MessageType
 import java.io.File
 import java.nio.file.Path
 import javax.swing.JOptionPane
@@ -123,13 +124,29 @@ fun main() = application {
                         .getPath()
                         ?: return@Item
                     val data = KSLFileUtil.scanToArray(path)
-                    viewModel = ViewModel(data, coroutineScope)
+                    if (data.isNotEmpty()) {
+                        JOptionPane.showMessageDialog(window, "Data imported successfully")
+                        viewModel = ViewModel(data, coroutineScope)
+                    } else {
+                        JOptionPane.showMessageDialog(
+                            window,
+                            "No data was found in file",
+                            "Invalid data",
+                            MessageType.ERROR.ordinal
+                        )
+                    }
                 })
                 Item("Save", onClick = {
-                    val session = viewModel.toSession() ?: run {
-                        JOptionPane.showMessageDialog(window, "Cannot save session: no results exist")
-                        return@Item
-                    }
+                    val session = viewModel.toSession()
+                        ?: run {
+                            JOptionPane.showMessageDialog(
+                                window,
+                                "Cannot save session: no results exist",
+                                "Invalid session",
+                                MessageType.ERROR.ordinal
+                            )
+                            return@Item
+                        }
                     val path = FileDialog(window, "Select a file to save session to", FileDialog.SAVE)
                         .getPath()
                         ?: return@Item
@@ -143,10 +160,18 @@ fun main() = application {
                     val json = runCatching {
                         Json.decodeFromString<ViewModelSavedSession>(string)
                     }.getOrElse {
-                        JOptionPane.showMessageDialog(window, "The JSON file that you imported is invalid.")
+                        JOptionPane.showMessageDialog(
+                            window,
+                            "The JSON file that you imported is invalid.",
+                            "Invalid session",
+                            MessageType.ERROR.ordinal
+                        )
                         return@Item
                     }
                     viewModel = ViewModel(json, coroutineScope)
+                })
+                Item("Clear data", onClick = {
+                    viewModel = ViewModel(doubleArrayOf(), coroutineScope)
                 })
             }
         }
