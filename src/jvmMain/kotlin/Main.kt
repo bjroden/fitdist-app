@@ -80,7 +80,8 @@ fun App(viewModel: ViewModel) {
                         FitVisualization(
                             viewModel.qqPlot,
                             viewModel.ppPlot,
-                            viewModel.histogramPlot
+                            viewModel.histogramPlot,
+                            viewModel.cdfPlot
                         )
                     }
                     splitter {

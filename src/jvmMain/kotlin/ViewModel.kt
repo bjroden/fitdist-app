@@ -14,10 +14,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.Serializable
 import ksl.utilities.distributions.*
 import ksl.utilities.statistic.Histogram
-import org.jetbrains.letsPlot.geom.geomDensity
-import org.jetbrains.letsPlot.geom.geomHistogram
-import org.jetbrains.letsPlot.geom.geomQQ2
-import org.jetbrains.letsPlot.geom.geomQQ2Line
+import org.jetbrains.letsPlot.geom.*
 import org.jetbrains.letsPlot.gggrid
 import org.jetbrains.letsPlot.ggsize
 import org.jetbrains.letsPlot.intern.Plot
@@ -222,6 +219,7 @@ class ViewModel(
         runQQData(runResults)
         runPPData(runResults)
         runHistogram(runResults)
+        runCDFData(runResults)
     }
 
     sealed interface PlotResult
@@ -331,10 +329,50 @@ class ViewModel(
         }
     }
 
+    private val internalCDFData = mutableStateMapOf<String, Any?>()
+
+    private fun runCDFData(runResults: RunResults) = coroutineScope.launch {
+        withContext(Dispatchers.Default) {
+            val data = data.sortedArray()
+            val probs = Plotting.generateExpectedProbabilities(data.size)
+            val dataMap = mapOf(
+                "empiricalData" to data.toList(),
+                "empiricalProbs" to probs
+            )
+            val theoreticalMap = letsPlotFromDists(
+                runResults,
+                "theoreticalData" to { data, dist -> Plotting.generateExpectedData(data.size, dist) },
+                "theoreticalProbs" to { data, _ -> Plotting.generateExpectedProbabilities(data.size) }
+            )
+            internalCDFData.clear()
+            if (theoreticalMap == null) { return@withContext }
+            internalCDFData += theoreticalMap.plus(dataMap)
+        }
+    }
+
+    // TODO: Add horizontal lines between points
+    val cdfPlot
+        get() = if (internalCDFData.isNotEmpty()) {
+            PlotSuccess(
+                letsPlot() +
+                        geomPoint(color="black") {
+                            x = internalCDFData["empiricalData"]
+                            y = internalCDFData["empiricalProbs"]
+                        } +
+                        geomLine {
+                            x = internalCDFData["theoreticalData"]
+                            y = internalCDFData["theoreticalProbs"]
+                            color = internalCDFData["cond"]
+                        }
+            )
+        } else {
+            PlotError("No data imported.")
+        }
+
     val allPlots
         get() = run {
             fun getPlot(plot: PlotResult) = (plot as? PlotSuccess)?.plot
-            val plots = listOf(qqPlot, ppPlot, histogramPlot).mapNotNull { getPlot(it) }
+            val plots = listOf(qqPlot, ppPlot, histogramPlot, cdfPlot).mapNotNull { getPlot(it) }
             if (plots.isNotEmpty()) {
                 gggrid(plots, ncol = 2)
             } else {

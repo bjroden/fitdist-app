@@ -17,10 +17,11 @@ import androidx.compose.ui.text.style.TextOverflow
 fun FitVisualization(
     qqPlot: ViewModel.PlotResult,
     ppPlot: ViewModel.PlotResult,
-    histogramPlot: ViewModel.PlotResult
+    histogramPlot: ViewModel.PlotResult,
+    cdfPlot: ViewModel.PlotResult
 ) {
     var tabState by remember { mutableStateOf(0) }
-    val titles = listOf("P-P Plot", "Q-Q Plot", "Histogram")
+    val titles = listOf("P-P Plot", "Q-Q Plot", "Histogram", "CDF")
     Box {
         Column {
             TabRow(selectedTabIndex = tabState) {
@@ -36,6 +37,7 @@ fun FitVisualization(
                 0 -> ppPlot
                 1 -> qqPlot
                 2 -> histogramPlot
+                3 -> cdfPlot
                 else -> ViewModel.PlotError("illegal tab")
             }
             if (plotRendered is ViewModel.PlotSuccess) {
