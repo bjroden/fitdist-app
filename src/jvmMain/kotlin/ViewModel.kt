@@ -18,6 +18,7 @@ import org.jetbrains.letsPlot.geom.geomDensity
 import org.jetbrains.letsPlot.geom.geomHistogram
 import org.jetbrains.letsPlot.geom.geomQQ2
 import org.jetbrains.letsPlot.geom.geomQQ2Line
+import org.jetbrains.letsPlot.gggrid
 import org.jetbrains.letsPlot.ggsize
 import org.jetbrains.letsPlot.intern.Plot
 import org.jetbrains.letsPlot.letsPlot
@@ -329,6 +330,17 @@ class ViewModel(
             internalHistogramEmpirical += empirical
         }
     }
+
+    val allPlots
+        get() = run {
+            fun getPlot(plot: PlotResult) = (plot as? PlotSuccess)?.plot
+            val plots = listOf(qqPlot, ppPlot, histogramPlot).mapNotNull { getPlot(it) }
+            if (plots.isNotEmpty()) {
+                gggrid(plots, ncol = 2)
+            } else {
+                null
+            }
+        }
 
     private fun letsPlotFromDists(
         runResults: RunResults,

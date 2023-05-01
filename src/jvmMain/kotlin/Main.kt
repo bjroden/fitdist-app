@@ -20,6 +20,7 @@ import ksl.utilities.io.KSLFileUtil
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import org.jetbrains.compose.splitpane.HorizontalSplitPane
 import org.jetbrains.compose.splitpane.rememberSplitPaneState
+import org.jetbrains.letsPlot.export.ggsave
 import ui.theme.AppTheme
 import java.awt.Cursor
 import java.awt.FileDialog
@@ -173,6 +174,32 @@ fun main() = application {
                 Item("Clear data", onClick = {
                     viewModel = ViewModel(doubleArrayOf(), coroutineScope)
                 })
+                Item("Save image", onClick = {
+                    val plots = viewModel.allPlots
+                        ?: run {
+                            JOptionPane.showMessageDialog(
+                                window,
+                                "No plots to save",
+                                "Invalid plots",
+                                MessageType.ERROR.ordinal
+                            )
+                            return@Item
+                        }
+                    val (dir, file) = FileDialog(window, "Select a file to save image to", FileDialog.SAVE)
+                        .apply { file = ".png" }
+                        .getDirAndFile()
+                        ?: return@Item
+                    runCatching {
+                        ggsave(plots, file, path = dir)
+                    }.onFailure {
+                        JOptionPane.showMessageDialog(
+                            window,
+                            "Failure on saving: ${it.message}",
+                            "Save failed",
+                            MessageType.ERROR.ordinal
+                        )
+                    }
+                })
             }
         }
 
@@ -185,4 +212,11 @@ fun FileDialog.getPath(): Path? {
     val dir = directory ?: return null
     val file = file ?: return null
     return File(dir, file).toPath()
+}
+
+fun FileDialog.getDirAndFile(): Pair<String, String>? {
+    isVisible = true
+    val dir = directory ?: return null
+    val file = file ?: return null
+    return Pair(dir, file)
 }

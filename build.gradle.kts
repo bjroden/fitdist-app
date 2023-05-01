@@ -27,6 +27,7 @@ kotlin {
                 implementation("org.jetbrains.compose.material3:material3-desktop:1.3.1")
                 implementation("org.jetbrains.compose.components:components-splitpane-desktop:1.3.1")
                 implementation("org.jetbrains.lets-plot:lets-plot-batik:3.1.0")
+                implementation("org.jetbrains.lets-plot:lets-plot-image-export:3.1.0")
                 implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.3.0")
                 implementation("org.jetbrains.kotlinx:dataframe:0.9.1")
                 implementation("org.example:fitdist-kotlin:v0.1.4")
