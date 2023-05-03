@@ -1,5 +1,6 @@
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -45,7 +46,10 @@ fun DistRanking(results: List<DistResult>) {
 @Composable
 @Preview
 fun EvalDisplay(result: DistResult) {
-    Card {
+    Card(
+        Modifier
+            .clickable {  }
+    ) {
         Row(
             Modifier
                 .padding(10.dp)
@@ -107,20 +111,22 @@ fun EvalDisplay(result: DistResult) {
                     )
                 }
             }
-            Column(
-                Modifier
-                    .width(400.dp)
-            ) {
-                result.dist.onSuccess {
-                    result.tests.forEach { testResult ->
-                        testResult.onSuccess { test ->
-                            test.warnings.forEach {warning ->
-                                Text(
-                                    "Warning: ${warning.message}",
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
+        }
+        Column(
+            Modifier
+                .padding(10.dp)
+                .fillMaxWidth(1f),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            result.dist.onSuccess {
+                result.tests.forEach { testResult ->
+                    testResult.onSuccess { test ->
+                        test.warnings.forEach {warning ->
+                            Text(
+                                "${getTestName(test)} Warning: ${warning.message}",
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
                     }
                 }
