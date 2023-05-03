@@ -189,7 +189,7 @@ fun TestWeight(
             }
             Box {
                 NumberInput(
-                    label = testType.testName,
+                    label = "Weight",
                     data = testWeightData.numberInputData,
                     placeHolder = "0 < x < 1",
                     onValueChange = { onValueChange(testType, it) }
