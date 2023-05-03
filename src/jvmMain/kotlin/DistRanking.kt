@@ -66,11 +66,11 @@ fun EvalDisplay(result: DistResult) {
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.width(150.dp)
             )
-            result.dist.onSuccess {
-                Column(
-                    Modifier
-                        .width(400.dp)
-                ) {
+            Column(
+                Modifier
+                    .width(400.dp)
+            ) {
+                result.dist.onSuccess {
                     result.tests.forEach { testResult ->
                         testResult.onSuccess { test ->
                             Row {
@@ -80,7 +80,7 @@ fun EvalDisplay(result: DistResult) {
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
-                            if (test is PValueIfc){
+                            if (test is PValueIfc) {
                                 Row {
                                     Text(
                                         "P-Value: ${formatDecimal(test.pValue)}",
@@ -99,17 +99,30 @@ fun EvalDisplay(result: DistResult) {
                             }
                         }
                     }
-                }
-            }.onFailure {
-                Column(
-                    Modifier
-                        .width(400.dp)
-                ) {
+                }.onFailure {
                     Text(
                         "Distribution is Invalid: ${it.message}",
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
+                }
+            }
+            Column(
+                Modifier
+                    .width(400.dp)
+            ) {
+                result.dist.onSuccess {
+                    result.tests.forEach { testResult ->
+                        testResult.onSuccess { test ->
+                            test.warnings.forEach {warning ->
+                                Text(
+                                    "Warning: ${warning.message}",
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
