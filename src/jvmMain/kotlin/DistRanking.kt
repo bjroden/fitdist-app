@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import goodnessoffit.AbstractGofTest
@@ -59,20 +60,44 @@ fun EvalDisplay(result: DistResult) {
         ) {
             Text(
                 result.distType.distName,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.width(200.dp),
-                style = MaterialTheme.typography.headlineMedium
-            )
-            Text(
-                "Score: %.6f".format(result.score),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.width(150.dp)
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.headlineMedium
             )
             Column(
                 Modifier
-                    .width(400.dp)
+                    .padding(10.dp)
+                    .weight(2f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Score: %.6f".format(result.score),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .width(IntrinsicSize.Max)
+                        .padding(horizontal = 10.dp)
+                )
+                result.dist.onSuccess {
+                    result.tests.forEach { testResult ->
+                        testResult.onSuccess { test ->
+                            test.warnings.forEach {warning ->
+                                Text(
+                                    "${getTestName(test)} Warning: ${warning.message}",
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            Column(
+                Modifier
+                    .weight(1f),
+                horizontalAlignment = Alignment.End
             ) {
                 result.dist.onSuccess {
                     result.tests.forEach { testResult ->
@@ -81,7 +106,8 @@ fun EvalDisplay(result: DistResult) {
                                 Text(
                                     "${getTestName(test)}: ${formatDecimal(test.testScore)}",
                                     maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    overflow = TextOverflow.Ellipsis,
+                                    textAlign = TextAlign.End
                                 )
                             }
                             if (test is PValueIfc) {
@@ -89,7 +115,8 @@ fun EvalDisplay(result: DistResult) {
                                     Text(
                                         "P-Value: ${formatDecimal(test.pValue)}",
                                         maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        overflow = TextOverflow.Ellipsis,
+                                        textAlign = TextAlign.End
                                     )
                                 }
                             }
@@ -98,7 +125,8 @@ fun EvalDisplay(result: DistResult) {
                                 Text(
                                     "Test Failed: ${error.message}",
                                     maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
+                                    overflow = TextOverflow.Ellipsis,
+                                    textAlign = TextAlign.End
                                 )
                             }
                         }
@@ -107,28 +135,9 @@ fun EvalDisplay(result: DistResult) {
                     Text(
                         "Distribution is Invalid: ${it.message}",
                         maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.End
                     )
-                }
-            }
-        }
-        Column(
-            Modifier
-                .padding(10.dp)
-                .fillMaxWidth(1f),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            result.dist.onSuccess {
-                result.tests.forEach { testResult ->
-                    testResult.onSuccess { test ->
-                        test.warnings.forEach {warning ->
-                            Text(
-                                "${getTestName(test)} Warning: ${warning.message}",
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
                 }
             }
         }
