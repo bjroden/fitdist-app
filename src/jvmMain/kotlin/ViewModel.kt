@@ -430,9 +430,12 @@ class ViewModel(
     }
 
     private fun getBins(width: Double): DoubleArray {
-        val numBins = ceil((data.max() - data.min()) / width).toInt()
+        val breaks = Histogram.recommendBreakPoints(data)
+        val highPoint = breaks.last()
+        val lowPoint = breaks[0]
+        val numBins = ceil((highPoint - lowPoint) / width).toInt()
         val arr = DoubleArray(numBins)
-        var value = data.min()
+        var value = lowPoint
         for (i in arr.indices) {
             arr[i] = value
             value += width
