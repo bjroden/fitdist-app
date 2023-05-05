@@ -175,7 +175,17 @@ class ViewModel(
 
             val results = dists.map { distType ->
                 // TODO: Library should handle runCatching for dist
-                val dist = runCatching { EstimationFactory.getDistribution(distType, data).getOrThrow() }
+                val dist = runCatching {
+                    if (distType == DistributionType.NegativeBinomialType) {
+                        val params = EstimationFactory
+                            .getEstimator(DistributionType.NegativeBinomialType)
+                            .estimate(data)
+                            .getOrThrow()
+                        FixedNegativeBinomial(params)
+                    } else {
+                        EstimationFactory.getDistribution(distType, data).getOrThrow()
+                    }
+                }
                 val tests = dist.map { dist ->
                     when (dist) {
                         is ContinuousDistributionIfc -> {

@@ -45,7 +45,7 @@ fun FitVisualization(
             } else {
                 Box(Modifier.fillMaxSize()) {
                     Text(
-                        text = "No results to display",
+                        text = "No charts to display",
                         modifier = Modifier.align(Alignment.Center),
                         fontStyle = FontStyle.Italic
                     )
