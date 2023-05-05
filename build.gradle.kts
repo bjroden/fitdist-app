@@ -30,7 +30,7 @@ kotlin {
                 implementation("org.jetbrains.lets-plot:lets-plot-image-export:3.1.0")
                 implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.3.0")
                 implementation("org.jetbrains.kotlinx:dataframe:0.9.1")
-                implementation("org.example:fitdist-kotlin:v0.1.4")
+                implementation("org.example:fitdist-kotlin:v0.1.5")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
             }
         }
