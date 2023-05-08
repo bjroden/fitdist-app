@@ -67,9 +67,15 @@ data class NumberInputData(
 }
 
 class ViewModel(
-    val data: DoubleArray,
+    data: DoubleArray,
     private val coroutineScope: CoroutineScope
 ) {
+    val data: DoubleArray
+
+    init {
+        this.data = data.sortedArray()
+    }
+
     constructor(
         session: ViewModelSavedSession,
         coroutineScope: CoroutineScope
@@ -211,15 +217,25 @@ class ViewModel(
 
             val runResults = RunResults(currentBinWidth, testWeights, results)
             internalRunResults.value = runResults
-            reconstructPlots(runResults)
+            reconstructPlotData(results)
         }
     }
 
-    private fun reconstructPlots(runResults: RunResults) = coroutineScope.launch {
-        runQQData(runResults)
-        runPPData(runResults)
-        runHistogram(runResults)
-        runCDFData(runResults)
+    private fun reconstructPlotData(distResults: Collection<DistResult>) = coroutineScope.launch {
+        val newObservedProbabilities = distResults.mapNotNull { distResult ->
+            distResult.dist.getOrNull()?.let { dist ->
+                distResult.distType to Plotting.observedDataToProbabilities(data, dist)
+            }
+        }
+        val newExpectedData = distResults.mapNotNull { distResult ->
+            distResult.dist.getOrNull()?.let { dist ->
+                distResult.distType to Plotting.generateExpectedData(data.size, dist)
+            }
+        }
+        expectedData.clear()
+        observedProbabilities.clear()
+        expectedData += newExpectedData
+        observedProbabilities += newObservedProbabilities
     }
 
     sealed interface PlotResult
@@ -227,13 +243,19 @@ class ViewModel(
     class PlotSuccess(val value: Figure): PlotResult
     class PlotError(val error: String): PlotResult
 
-    private val internalQQData = mutableStateMapOf<String, Any?>()
+    private val expectedProbabilities = Plotting.generateExpectedProbabilities(data.size)
+    private val expectedData = mutableStateMapOf<DistributionType, DoubleArray>()
+    private val observedProbabilities = mutableStateMapOf<DistributionType, DoubleArray>()
 
-    val qqData
-        get() = internalQQData.toMap()
+    private val qqData
+        get() = mapOf(
+            "cond" to expectedData.flatMap { (distType, _) -> List(data.size) { distType.distName } },
+            "Theoretical" to expectedData.flatMap { (_, data) -> data.toList() },
+            "Empirical" to List(expectedData.size) { data.toList() }.flatten()
+        )
 
     val qqPlot
-        get() = if(internalQQData.isNotEmpty()) {
+        get() = if(expectedData.isNotEmpty() && data.isNotEmpty()) {
             PlotSuccess(
                 letsPlot(qqData) { x = "Theoretical"; y = "Empirical"; color = "cond" } +
                         geomQQ2(size = 4, alpha = .7) +
@@ -243,26 +265,15 @@ class ViewModel(
             PlotError("No data imported")
         }
 
-    private fun runQQData(runResults: RunResults) = coroutineScope.launch {
-        withContext(Dispatchers.Default) {
-            val letsPlotData = letsPlotFromDists(
-                runResults,
-                "Theoretical" to { data, dist -> Plotting.generateExpectedData(data.size, dist) },
-                "Empirical" to { data, _ -> data }
-            )
-            internalQQData.clear()
-            if (letsPlotData == null) { return@withContext }
-            internalQQData += letsPlotData
-        }
-    }
-
-    private val internalPPData = mutableStateMapOf<String, Any?>()
-
-    val ppData
-        get() = internalPPData.toMap()
+    private val ppData
+        get() = mapOf(
+            "cond" to observedProbabilities.flatMap { (distType, _) -> List(data.size) { distType.distName } },
+            "Theoretical" to List(observedProbabilities.size) { expectedProbabilities.toList() }.flatten(),
+            "Empirical" to observedProbabilities.flatMap { (_, data) -> data.toList() }
+        )
 
     val ppPlot
-        get() = if(internalQQData.isNotEmpty()) {
+        get() = if(observedProbabilities.isNotEmpty() && expectedProbabilities.isNotEmpty()) {
             PlotSuccess(
                 letsPlot(ppData) { x = "Theoretical"; y = "Empirical"; color = "cond" } +
                         geomQQ2(size = 4, alpha = .7) +
@@ -272,98 +283,72 @@ class ViewModel(
             PlotError("No data imported")
         }
 
-    private fun runPPData(runResults: RunResults) = coroutineScope.launch {
-        withContext(Dispatchers.Default) {
-            val letsPlotData = letsPlotFromDists(
-                runResults,
-                "Theoretical" to { data, _ -> Plotting.generateExpectedProbabilities(data.size) },
-                "Empirical" to { data, dist -> Plotting.observedDataToProbabilities(data, dist) }
-            )
-            internalPPData.clear()
-            if (letsPlotData == null) { return@withContext }
-            internalPPData += letsPlotData
-        }
-    }
+    private val histogramTheoretical
+        get() = mutableStateMapOf(
+            "cond" to expectedData.flatMap { (distType, _) -> List(data.size) { distType.distName } },
+            "data" to expectedData.flatMap { (_, data) -> data.toList() }
+        )
 
-    private val internalHistogramTheoretical = mutableStateMapOf<String, Any?>()
+    private val histogramEmpirical
+        get() = mutableStateMapOf(
+            "cond" to List(data.size) { "Empirical" },
+            "data" to data.toList()
+        )
 
-    private val internalHistogramEmpirical = mutableStateMapOf<String, Any?>()
-
-    val histogramTheoretical
-        get() = internalHistogramTheoretical.toMap()
-
-    val dummy = mapOf<String, Any?>(
-        "cond" to emptyList<String>(),
-        "data" to emptyList<Number>()
-    )
     val histogramPlot
-        get() = if(internalHistogramEmpirical.isNotEmpty() && internalHistogramTheoretical.isNotEmpty()) {
-            PlotSuccess(letsPlot(dummy) { x = "data"; color = "cond" } +
+        get() = if (
+            data.isNotEmpty() &&
+            expectedData.isNotEmpty() &&
+            observedProbabilities.isNotEmpty() &&
+            expectedProbabilities.isNotEmpty()
+        ) {
+            PlotSuccess(letsPlot() +
                     ggsize(500, 250) +
-                    geomHistogram(data = histogramEmpirical, binWidth=runResults?.binWidth, color="black", fill="white") { y = "..density.." } +
-                    geomDensity(data = histogramTheoretical, alpha=0.2)
+                    geomHistogram(
+                        binWidth=runResults?.binWidth,
+                        color="black",
+                        fill="white"
+                    ) {
+                        x = histogramEmpirical["data"]
+                        color = histogramEmpirical["cond"]
+                        y = "..density.."
+                    } +
+                    geomDensity(alpha=0.2) {
+                        x = histogramTheoretical["data"]
+                        color = histogramTheoretical["cond"]
+                    }
             )
         } else {
             PlotError("No data imported.")
         }
 
-    val histogramEmpirical
-        get() = internalHistogramEmpirical.toMap()
-
-    private fun runHistogram(runResults: RunResults) = coroutineScope.launch {
-        withContext(Dispatchers.Default) {
-            val empirical = mapOf<String, Any?>(
-                "cond" to List(data.size) { "Empirical" },
-                "data" to data.sortedArray()
-            )
-            val theoretical = letsPlotFromDists(
-                runResults,
-                "data" to { data, dist -> Plotting.generateExpectedData(data.size, dist) }
-            )
-
-            internalHistogramTheoretical.clear()
-            internalHistogramEmpirical.clear()
-            if (theoretical == null || data.isEmpty()) { return@withContext }
-            internalHistogramTheoretical += theoretical
-            internalHistogramEmpirical += empirical
-        }
-    }
-
-    private val internalCDFData = mutableStateMapOf<String, Any?>()
-
-    private fun runCDFData(runResults: RunResults) = coroutineScope.launch {
-        withContext(Dispatchers.Default) {
-            val data = data.sortedArray()
-            val probs = Plotting.generateExpectedProbabilities(data.size)
-            val dataMap = mapOf(
-                "empiricalData" to data.toList(),
-                "empiricalProbs" to probs
-            )
-            val theoreticalMap = letsPlotFromDists(
-                runResults,
-                "theoreticalData" to { data, dist -> Plotting.generateExpectedData(data.size, dist) },
-                "theoreticalProbs" to { data, _ -> Plotting.generateExpectedProbabilities(data.size) }
-            )
-            internalCDFData.clear()
-            if (theoreticalMap == null) { return@withContext }
-            internalCDFData += theoreticalMap.plus(dataMap)
-        }
-    }
+    private val cdfData
+        get() = mapOf(
+            "empiricalData" to data.toList(),
+            "empiricalProbs" to expectedProbabilities.toList(),
+            "theoreticalData" to expectedData.flatMap { (_, data) -> data.toList() },
+            "theoreticalProbs" to List(observedProbabilities.size) { expectedProbabilities.toList() }.flatten(),
+            "cond" to expectedData.flatMap { (distType, _) -> List(data.size) { distType.distName } }
+        )
 
     // TODO: Add horizontal lines between points
     val cdfPlot
-        get() = if (internalCDFData.isNotEmpty()) {
-            PlotSuccess(
-                letsPlot() +
-                        geomPoint(color="black") {
-                            x = internalCDFData["empiricalData"]
-                            y = internalCDFData["empiricalProbs"]
-                        } +
-                        geomLine {
-                            x = internalCDFData["theoreticalData"]
-                            y = internalCDFData["theoreticalProbs"]
-                            color = internalCDFData["cond"]
-                        }
+        get() = if (
+            data.isNotEmpty() &&
+            expectedData.isNotEmpty() &&
+            observedProbabilities.isNotEmpty() &&
+            expectedProbabilities.isNotEmpty()
+        ) {
+            PlotSuccess(letsPlot() +
+                    geomPoint(color="black") {
+                        x = cdfData["empiricalData"]
+                        y = cdfData["empiricalProbs"]
+                    } +
+                    geomLine {
+                        x = cdfData["theoreticalData"]
+                        y = cdfData["theoreticalProbs"]
+                        color = cdfData["cond"]
+                    }
             )
         } else {
             PlotError("No data imported.")
@@ -379,28 +364,6 @@ class ViewModel(
                 PlotError("No plots to display")
             }
         }
-
-    private fun letsPlotFromDists(
-        runResults: RunResults,
-        vararg transformers: Pair<String, (DoubleArray, DistributionIfc<*>) -> DoubleArray>
-    ): Map<String, Any?>? {
-        val sortedData = data.sortedArray()
-        val dists = runResults.distResults.mapNotNull { distResult ->
-            distResult.dist.getOrNull()?.let { dist ->
-                distResult.distType to dist
-            }
-        }
-        if (dists.isEmpty()) { return null }
-        val cond = dists.flatMap { (distType, _) ->
-            List(sortedData.size) { distType.distName }
-        }
-        val data = transformers.associate { (key, transformer) ->
-            key to dists.flatMap { (_, dist) ->
-                transformer(sortedData, dist).toList()
-            }
-        }
-        return mapOf("cond" to cond) + data
-    }
 
     private val internalBinWidthData = mutableStateOf(
         NumberInputData(
