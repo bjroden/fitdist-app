@@ -14,10 +14,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.Serializable
 import ksl.utilities.distributions.*
 import ksl.utilities.statistic.Histogram
+import org.jetbrains.letsPlot.Figure
 import org.jetbrains.letsPlot.geom.*
 import org.jetbrains.letsPlot.gggrid
 import org.jetbrains.letsPlot.ggsize
-import org.jetbrains.letsPlot.intern.Plot
 import org.jetbrains.letsPlot.letsPlot
 import plotting.Plotting
 import kotlin.math.ceil
@@ -224,7 +224,7 @@ class ViewModel(
 
     sealed interface PlotResult
 
-    class PlotSuccess(val plot: Plot): PlotResult
+    class PlotSuccess(val value: Figure): PlotResult
     class PlotError(val error: String): PlotResult
 
     private val internalQQData = mutableStateMapOf<String, Any?>()
@@ -371,12 +371,12 @@ class ViewModel(
 
     val allPlots
         get() = run {
-            fun getPlot(plot: PlotResult) = (plot as? PlotSuccess)?.plot
+            fun getPlot(plot: PlotResult) = (plot as? PlotSuccess)?.value
             val plots = listOf(qqPlot, ppPlot, histogramPlot, cdfPlot).mapNotNull { getPlot(it) }
             if (plots.isNotEmpty()) {
-                gggrid(plots, ncol = 2)
+                PlotSuccess(gggrid(plots, ncol = 2))
             } else {
-                null
+                PlotError("No plots to display")
             }
         }
 

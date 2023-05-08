@@ -78,6 +78,7 @@ fun App(viewModel: ViewModel) {
                     }
                     second(100.dp) {
                         FitVisualization(
+                            viewModel.allPlots,
                             viewModel.qqPlot,
                             viewModel.ppPlot,
                             viewModel.histogramPlot,
@@ -176,16 +177,17 @@ fun main() = application {
                     viewModel = ViewModel(doubleArrayOf(), coroutineScope)
                 })
                 Item("Save image", onClick = {
-                    val plots = viewModel.allPlots
-                        ?: run {
-                            JOptionPane.showMessageDialog(
-                                window,
-                                "No plots to save",
-                                "Invalid plots",
-                                MessageType.ERROR.ordinal
-                            )
-                            return@Item
-                        }
+                    val plots = if (viewModel.allPlots is ViewModel.PlotSuccess) {
+                        (viewModel.allPlots as ViewModel.PlotSuccess).value
+                    } else {
+                        JOptionPane.showMessageDialog(
+                            window,
+                            "No plots to save",
+                            "Invalid plots",
+                            MessageType.ERROR.ordinal
+                        )
+                        return@Item
+                    }
                     val (dir, file) = FileDialog(window, "Select a file to save image to", FileDialog.SAVE)
                         .apply { file = ".png" }
                         .getDirAndFile()

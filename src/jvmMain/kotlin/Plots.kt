@@ -7,14 +7,14 @@ import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.graphics.Color
 import jetbrains.datalore.plot.MonolithicCommon
 import jetbrains.datalore.vis.swing.batik.DefaultPlotPanelBatik
-import org.jetbrains.letsPlot.intern.Plot
+import org.jetbrains.letsPlot.Figure
 import org.jetbrains.letsPlot.intern.toSpec
 import javax.swing.BoxLayout
 import javax.swing.JPanel
 
 @Composable
 @Preview
-fun plotPanel(plot: Plot) {
+fun plotPanel(plot: Figure) {
     val processedSpec = MonolithicCommon.processRawSpecs(plot.toSpec(), frontendOnly = false)
     // Creates Batik Plot Panel
     var plotPanel = DefaultPlotPanelBatik(
