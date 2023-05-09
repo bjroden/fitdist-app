@@ -11,10 +11,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
+import estimations.DistributionType
 
 @Composable
 @Preview
 fun FitVisualization(
+    selectableDists: Collection<DistributionType>,
+    selectedDist: DistributionType?,
+    onDistSelected: (DistributionType) -> Unit,
     allPlot: ViewModel.PlotResult,
     qqPlot: ViewModel.PlotResult,
     ppPlot: ViewModel.PlotResult,
@@ -32,6 +36,18 @@ fun FitVisualization(
                         onClick = { tabState = index },
                         text = { Text(text = title, maxLines = 2, overflow = TextOverflow.Ellipsis) }
                     )
+                }
+            }
+            selectedDist?.let { selected ->
+                val distTabState by derivedStateOf { selectableDists.indexOf(selected) }
+                TabRow(selectedTabIndex = distTabState) {
+                    selectableDists.forEach { dist ->
+                        Tab(
+                            selected = dist == selected,
+                            onClick = { onDistSelected(dist) },
+                            text = { Text(text = dist.distName, maxLines = 2, overflow = TextOverflow.Ellipsis) }
+                        )
+                    }
                 }
             }
             val plotRendered = when (tabState) {

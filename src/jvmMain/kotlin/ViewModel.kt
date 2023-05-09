@@ -1,5 +1,6 @@
 
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import datascoring.DataScoring
@@ -218,7 +219,26 @@ class ViewModel(
             val runResults = RunResults(currentBinWidth, testWeights, results)
             internalRunResults.value = runResults
             reconstructPlotData(results)
+            internalSelectableTabs.clear()
+            internalSelectableTabs += results.mapNotNull { result ->
+                result.dist.getOrNull()?.let { result.distType }
+            }
+            internalSelectedDist.value = internalSelectableTabs.firstOrNull()
         }
+    }
+
+    private val internalSelectableTabs = mutableStateListOf<DistributionType>()
+
+    val selectableDistsForPlots
+        get() = internalSelectableTabs.toList()
+
+    private val internalSelectedDist = mutableStateOf<DistributionType?>(null)
+
+    val selectedDist
+        get() = internalSelectedDist.value
+
+    fun onPlotDistSelected(distType: DistributionType) {
+        internalSelectedDist.value = distType
     }
 
     private fun reconstructPlotData(distResults: Collection<DistResult>) = coroutineScope.launch {
@@ -249,15 +269,14 @@ class ViewModel(
 
     private val qqData
         get() = mapOf(
-            "cond" to expectedData.flatMap { (distType, _) -> List(data.size) { distType.distName } },
-            "Theoretical" to expectedData.flatMap { (_, data) -> data.toList() },
-            "Empirical" to List(expectedData.size) { data.toList() }.flatten()
+            "Theoretical" to expectedData[selectedDist]?.toList(),
+            "Empirical" to data.toList()
         )
 
     val qqPlot
         get() = if(expectedData.isNotEmpty() && data.isNotEmpty()) {
             PlotSuccess(
-                letsPlot(qqData) { x = "Theoretical"; y = "Empirical"; color = "cond" } +
+                letsPlot(qqData) { x = "Theoretical"; y = "Empirical" } +
                         geomQQ2(size = 4, alpha = .7) +
                         geomQQ2Line(size = 1, color="#000000")
             )
@@ -267,15 +286,14 @@ class ViewModel(
 
     private val ppData
         get() = mapOf(
-            "cond" to observedProbabilities.flatMap { (distType, _) -> List(data.size) { distType.distName } },
-            "Theoretical" to List(observedProbabilities.size) { expectedProbabilities.toList() }.flatten(),
-            "Empirical" to observedProbabilities.flatMap { (_, data) -> data.toList() }
+            "Theoretical" to expectedProbabilities.toList(),
+            "Empirical" to observedProbabilities[selectedDist]?.toList()
         )
 
     val ppPlot
         get() = if(observedProbabilities.isNotEmpty() && expectedProbabilities.isNotEmpty()) {
             PlotSuccess(
-                letsPlot(ppData) { x = "Theoretical"; y = "Empirical"; color = "cond" } +
+                letsPlot(ppData) { x = "Theoretical"; y = "Empirical" } +
                         geomQQ2(size = 4, alpha = .7) +
                         geomQQ2Line(size = 1, color="#000000")
             )
@@ -285,13 +303,11 @@ class ViewModel(
 
     private val histogramTheoretical
         get() = mutableStateMapOf(
-            "cond" to expectedData.flatMap { (distType, _) -> List(data.size) { distType.distName } },
-            "data" to expectedData.flatMap { (_, data) -> data.toList() }
+            "data" to expectedData[selectedDist]?.toList()
         )
 
     private val histogramEmpirical
         get() = mutableStateMapOf(
-            "cond" to List(data.size) { "Empirical" },
             "data" to data.toList()
         )
 
@@ -310,12 +326,10 @@ class ViewModel(
                         fill="white"
                     ) {
                         x = histogramEmpirical["data"]
-                        color = histogramEmpirical["cond"]
                         y = "..density.."
                     } +
                     geomDensity(alpha=0.2) {
                         x = histogramTheoretical["data"]
-                        color = histogramTheoretical["cond"]
                     }
             )
         } else {
@@ -326,9 +340,8 @@ class ViewModel(
         get() = mapOf(
             "empiricalData" to data.toList(),
             "empiricalProbs" to expectedProbabilities.toList(),
-            "theoreticalData" to expectedData.flatMap { (_, data) -> data.toList() },
-            "theoreticalProbs" to List(observedProbabilities.size) { expectedProbabilities.toList() }.flatten(),
-            "cond" to expectedData.flatMap { (distType, _) -> List(data.size) { distType.distName } }
+            "theoreticalData" to expectedData[selectedDist]?.toList(),
+            "theoreticalProbs" to expectedProbabilities.toList()
         )
 
     // TODO: Add horizontal lines between points
@@ -347,7 +360,6 @@ class ViewModel(
                     geomLine {
                         x = cdfData["theoreticalData"]
                         y = cdfData["theoreticalProbs"]
-                        color = cdfData["cond"]
                     }
             )
         } else {

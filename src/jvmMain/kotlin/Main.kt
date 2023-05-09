@@ -78,6 +78,9 @@ fun App(viewModel: ViewModel) {
                     }
                     second(100.dp) {
                         FitVisualization(
+                            viewModel.selectableDistsForPlots,
+                            viewModel.selectedDist,
+                            { viewModel.onPlotDistSelected(it) },
                             viewModel.allPlots,
                             viewModel.qqPlot,
                             viewModel.ppPlot,
