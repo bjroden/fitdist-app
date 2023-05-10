@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.Serializable
 import ksl.utilities.distributions.*
 import ksl.utilities.statistic.Histogram
+import ksl.utilities.statistic.Statistic
 import org.jetbrains.letsPlot.Figure
 import org.jetbrains.letsPlot.geom.*
 import org.jetbrains.letsPlot.gggrid
@@ -273,12 +274,40 @@ class ViewModel(
             "Empirical" to data.toList()
         )
 
+    private fun qqCord(percentile: Double) = runResults
+            ?.distResults
+            ?.find { it.distType == selectedDist }
+            ?.dist
+            ?.getOrNull()
+            ?.let { dist ->
+                Pair(dist.invCDF(percentile), Statistic.percentile(data, percentile))
+            }
+    private val qqCoord25
+        get() = qqCord(0.25)
+
+    private val qqCoord75
+        get() = qqCord(0.75)
+
+    private val qqSlope
+        get() = qqCoord75?.let { (x2, y2) ->
+            qqCoord25?.let { (x1, y1) ->
+                (y2 - y1) / (x2 - x1)
+            }
+        }
+
+    private val qqIntercept
+        get() = qqSlope?.let { slope ->
+            qqCoord25?.let { (x, y) ->
+                y - (slope * x)
+            }
+        }
+
     val qqPlot
         get() = if(expectedData.isNotEmpty() && data.isNotEmpty()) {
             PlotSuccess(
                 letsPlot(qqData) { x = "Theoretical"; y = "Empirical" } +
-                        geomQQ2(size = 4, alpha = .7) +
-                        geomQQ2Line(size = 1, color="#000000")
+                        geomPoint(size = 4, alpha = .7) +
+                        geomABLine(size = 1, color="#000000", slope = qqSlope, intercept = qqIntercept)
             )
         } else {
             PlotError("No data imported")
@@ -294,8 +323,8 @@ class ViewModel(
         get() = if(observedProbabilities.isNotEmpty() && expectedProbabilities.isNotEmpty()) {
             PlotSuccess(
                 letsPlot(ppData) { x = "Theoretical"; y = "Empirical" } +
-                        geomQQ2(size = 4, alpha = .7) +
-                        geomQQ2Line(size = 1, color="#000000")
+                        geomPoint(size = 4, alpha = .7) +
+                        geomABLine(size = 1, color="#000000", slope = 1, intercept = 0)
             )
         } else {
             PlotError("No data imported")
